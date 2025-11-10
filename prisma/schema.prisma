@@ -30,7 +30,7 @@ model BarbershopService {
   description  String
   imageUrl     String
   babershopId  String
-  barbersjop   Barbershop @relation(fields: [babershopId], references: [id])
+  barbershop   Barbershop @relation(fields: [babershopId], references: [id])
   priceInCents Int
 }
 
