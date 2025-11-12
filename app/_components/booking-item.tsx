@@ -34,13 +34,15 @@ const bookingItem = ({
             <p className="text-xs capitalize">
                 {date.toLocaleDateString('pt-BR', {month: 'long'})}
             </p>
-            <p>{date.toLocaleDateString ('pt-BR',{day: '2-digit'})}
+            <p className="text-2xl">
+                {date.toLocaleDateString ('pt-BR',{day: '2-digit'})}
             </p>
             <p className="text-xs capitalize">
                 {date.toLocaleTimeString ('pt-BR',{hour: '2-digit', minute: '2-digit'})}
             </p>
         </div>
     </Card>
+    
   )
 }   
 export default bookingItem;
