@@ -30,7 +30,7 @@ const bookingItem = ({
         </div>
         </div>
         {/* DIREITA */}
-        <div className="flex flex-col items-center justify-center p-4 h-full border-l py-3 min-h-full">
+        <div className="flex flex-col items-center justify-center p-4 h-full border-l py-3">
             <p className="text-xs capitalize">
                 {date.toLocaleDateString('pt-BR', {month: 'long'})}
             </p>
