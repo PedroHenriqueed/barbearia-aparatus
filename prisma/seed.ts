@@ -4,6 +4,8 @@ const prisma = new PrismaClient();
 
 async function seedDatabase() {
   try {
+    await prisma.barbershopService.deleteMany({});
+    await prisma.barbershop.deleteMany({});
     const images = [
       "https://utfs.io/f/c97a2dc9-cf62-468b-a851-bfd2bdde775f-16p.png",
       "https://utfs.io/f/45331760-899c-4b4b-910e-e00babb6ed81-16q.png",
@@ -96,7 +98,7 @@ async function seedDatabase() {
         description: "Hidratação profunda para cabelo e barba.",
         price: 25.0,
         imageUrl:
-          "https://utfs.io/f/8a457cda-f768-411d-a737-cdb23ca6b9b5-b3pegf.png",
+          "https://raw.githubusercontent.com/PedroHenriqueed/barbearia-aparatus/b91dbf8ae66193b278f42973a2b7eb2e034dbae5/public/img.svg",
       },
     ];
 

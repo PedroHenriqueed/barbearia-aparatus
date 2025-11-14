@@ -3,7 +3,7 @@
 import { Button } from "@/app/_components/ui/button";
 import { Card, CardContent } from "@/app/_components/ui/card";
 import { Separator } from "@/app/_components/ui/separator";
-import { ArrowLeft, Phone } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/app/_components/ui/avatar";
 import Image from "next/image";
 import Link from "next/link";
@@ -66,7 +66,7 @@ export default function BarbershopDetails({ barbershop }: BarbershopDetailsProps
         </div>
             </div>
           
-          <Separator className="my-4" />
+          <Separator className="my-6" />
           <div>
             <h2 className="text-xs font-bold text-foreground mb-1">SOBRE NÓS</h2>
             <p className="text-sm text-muted-foreground">{barbershop.description}</p>
@@ -88,7 +88,7 @@ export default function BarbershopDetails({ barbershop }: BarbershopDetailsProps
                     <div className="flex flex-col flex-1">
                     <h3 className="font-semibold text-foreground text-sm">{service.name}</h3>
                     <p className="text-xs text-muted-foreground">{service.description}</p>
-                    <div className="flex items-center gap-8 mt-1">
+                    <div className="flex items-center gap-13 mt-1">
                     <span className="text-sm font-bold text-foreground mt-1">
                         R$ {(service.priceInCents / 100).toFixed(2).replace('.', ',')}
                     </span>
@@ -108,9 +108,9 @@ export default function BarbershopDetails({ barbershop }: BarbershopDetailsProps
           <div>
             <h2 className="text-xs font-bold text-foreground mb-1">CONTATO</h2>
             <div className="flex flex-col gap-2">
-              {barbershop.phones.map(phone => (
+              {barbershop.phones.map((phone) => (
                 <div key={phone} className="flex items-center gap-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <i className="fi fi-rr-mobile-button text-muted-foreground"></i>
                   <span className="text-sm text-foreground ">{phone}</span>
                   <Button
                     variant="outline"
@@ -125,8 +125,8 @@ export default function BarbershopDetails({ barbershop }: BarbershopDetailsProps
             </div>
           </div>          
         </CardContent>
+        <Footer/>
       </Card>
-      <Footer/>
     </div>
   );
 }
