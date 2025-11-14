@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Barbershop } from "../generated/prisma/client";
 import Image from "next/image";
 
@@ -8,8 +9,8 @@ interface BarbershopItemProps {
 
 const BarbershopItem = ({barbershop}: BarbershopItemProps) => {
   return (
-    
-    <div className="relative rounded-xl min-h-[200px] min-w-[290px]">
+      <Link href ={`/barbershops/${barbershop.id}`}
+      className="relative rounded-xl min-h-[200px] min-w-[290px]">
     <div className="bg-linear-to-t from-black to-transparent h-full w-full absolute top-0 left-0 z-10 rounded-lg" />
     <Image 
     src= {barbershop.imageUrl} 
@@ -20,7 +21,7 @@ const BarbershopItem = ({barbershop}: BarbershopItemProps) => {
     <h3 className="text-background text-lg font-bold">{barbershop.name}</h3>
     <p className="text-background text-xs">{barbershop.address}</p>
   </div>
-  </div>
+  </Link>
   );
 }   
 export default BarbershopItem;
