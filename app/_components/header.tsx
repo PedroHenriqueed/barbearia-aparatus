@@ -1,45 +1,27 @@
 "use client";
 
-import Image from 'next/image';
-import {Button} from './ui/button';  
-import { LogInIcon, MenuIcon } from 'lucide-react';
-import { authClient } from '@/lib/auth-client';
-import { use } from 'react';
+import Image from "next/image";
+import { Button } from "./ui/button";
+import { MenuIcon } from "lucide-react";
+import { Card, CardContent } from "./ui/card";
+import SidebarSheet from "./sidebar-sheet";
 
 const Header = () => {
-  const {data : session } = authClient.useSession();
-  const handleLogin = async () => {
-     await authClient.signIn.social({
-      provider: 'google',
-    })
-  }
   return (
-    <header className="flex items-center justify-between bg-white px-5 py-6">
-      <Image src="/logo.svg" alt="Aparatus_Logo" width={100} height={26.09} />
-      <div className="flex items-center gap-2">
-        {session ? (
-          <div>
-            <h1>Olá, {session.user?.name}</h1>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => authClient.signOut()}
-            >
-              <LogInIcon />
-            </Button>
-          </div>
-        ) : (
-          <Button variant="outline" size="icon" onClick={handleLogin}>
-            <LogInIcon />
-          </Button>
-        )}
+    <header>
+      <Card className="rounded-none border-none shadow-none">
+        <CardContent className="flex flex-row items-center justify-between px-5">
+          <Image src="/Logo.svg" alt="FSW Barber" height={18} width={120} />
 
-        <Button variant="outline" size="icon">
-          <MenuIcon />
-        </Button>
-      </div>
+          <SidebarSheet>
+            <Button variant="outline" size="icon">
+              <MenuIcon size={18} />
+            </Button>
+          </SidebarSheet>
+        </CardContent>
+      </Card>
     </header>
   );
+};
 
-}
-export default Header;  
+export default Header;
