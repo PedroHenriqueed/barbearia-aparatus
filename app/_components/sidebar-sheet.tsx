@@ -13,7 +13,7 @@ import {
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { authClient } from "@/lib/auth-client";
-import Image from "next/image";
+
 
 interface SidebarSheetProps {
   children: React.ReactNode;
