@@ -120,8 +120,8 @@ export default function BarbershopDetails({
             </div>
           </div>
         </CardContent>
-        <Footer />
       </Card>
+      <Footer />
     </div>
   );
 }

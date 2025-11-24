@@ -16,8 +16,11 @@ const bookingItem = ({
     <Card className="flex flex-row items-center justify-between w-full min-w-full p-0">
         {/* ESQUERDA */}
         <div className="flex flex-col gap-4 flex-1 p-4">
-            <Badge>
-                Confirmado
+            <Badge 
+            variant="secondary"
+            className="bg-secondary hover:bg-secondary text-primary rounded-full px-3 py-1"
+            >
+                CONFIRMADO
             </Badge>
         <div className="flex flex-col gap-2">
             <p className="font-bold">{serivceName}</p>
