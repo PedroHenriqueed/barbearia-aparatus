@@ -36,6 +36,8 @@ model BarbershopService {
 
 model Booking {
   id          String    @id @default(uuid())
+  userId      String    // Campo adicionado
+  user        User      @relation(fields: [userId], references: [id]) // Relacionamento adicionado
   servicesId  String
   babershopId String
   date        DateTime  @db.Timestamptz
@@ -53,6 +55,7 @@ model User {
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
+  bookings      Booking[] // Relacionamento inverso adicionado
 
   @@unique([email])
   @@map("user")
@@ -102,4 +105,3 @@ model Verification {
 
   @@map("verification")
 }
-

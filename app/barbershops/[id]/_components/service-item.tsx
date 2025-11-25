@@ -12,14 +12,17 @@ import {
 } from "@/app/_components/ui/sheet";
 import { Barbershop, BarbershopService } from "@/app/generated/prisma/client";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Smartphone } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Badge } from "@/app/_components/ui/badge";
+import { useAction } from "next-safe-action/hooks";
 import {
   Avatar,
   AvatarFallback,
   AvatarImage,
 } from "@/app/_components/ui/avatar";
+import { createBooking } from "@/app/_actions/create-booking";
+import { toast } from "sonner";
 
 interface ServiceItemProps {
   service: BarbershopService;
@@ -32,10 +35,20 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
     undefined,
   );
-  const [date, setDate] = useState(new Date());
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Lista de horários fixa
+
+  const { executeAsync, isPending } = useAction(createBooking, {
+    onSuccess: () => {
+      toast.success("Agendamento criado com sucesso!");
+      setStep("confirmation");
+    },
+    onError: ({ error }) => {
+      toast.error(error.serverError || "Erro ao criar agendamento.");
+    },
+  });
+
   const timeList = [
     "09:00",
     "09:30",
@@ -58,14 +71,13 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     "18:00",
   ];
 
-  // Lógica para gerar os dias do calendário
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
     const month = currentMonth.getMonth();
     const firstDayOfMonth = new Date(year, month, 1);
     const lastDayOfMonth = new Date(year, month + 1, 0);
     const days = [];
-    const startDayOfWeek = firstDayOfMonth.getDay(); // 0 = Domingo
+    const startDayOfWeek = firstDayOfMonth.getDay();
 
     for (let i = startDayOfWeek; i > 0; i--) {
       const d = new Date(year, month, 1 - i);
@@ -104,7 +116,23 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   };
 
   const handleBookingSubmit = () => {
-    setStep("confirmation");
+    handleConfirm();
+  };
+
+  const handleConfirm = async () => {
+    if (!selectedTime || !date) return;
+
+    const timeParts = selectedTime.split(":");
+    const hour = parseInt(timeParts[0]);
+    const minute = parseInt(timeParts[1]);
+
+    const bookingDate = new Date(date);
+    bookingDate.setHours(hour, minute, 0, 0);
+
+    await executeAsync({
+      serviceId: service.id,
+      date: bookingDate,
+    });
   };
 
   const handleBack = () => {
@@ -114,23 +142,29 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const handleCancel = () => {
     setSheetIsOpen(false);
     setStep("calendar");
+    setSelectedTime(undefined);
+    setDate(new Date());
   };
 
   const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      toast.success("Telefone copiado!");
+    }
   };
 
   const monthName = currentMonth.toLocaleDateString("pt-BR", { month: "long" });
   const capitalizedMonth =
     monthName.charAt(0).toUpperCase() + monthName.slice(1);
 
-  const formattedSelectedDate = date.toLocaleDateString("pt-BR", {
+  const formattedSelectedDate = date?.toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "long",
   });
 
   const isSelected = (d: Date) => {
     return (
+      date &&
       d.getDate() === date.getDate() &&
       d.getMonth() === date.getMonth() &&
       d.getFullYear() === date.getFullYear()
@@ -168,12 +202,15 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
             open={sheetIsOpen}
             onOpenChange={(open) => {
               setSheetIsOpen(open);
-              if (!open) setStep("calendar");
+              if (!open) {
+                setStep("calendar");
+                setSelectedTime(undefined);
+              }
             }}
           >
             <SheetTrigger asChild>
               <Button
-                variant="default"
+                variant="secondary"
                 className="rounded-full px-4 text-xs font-bold"
                 size="sm"
               >
@@ -186,7 +223,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
               className="flex h-[90vh] flex-col overflow-hidden rounded-t-[20px] p-0 sm:h-[85vh]"
             >
               <SheetHeader className="border-border border-b p-5 text-left">
-                <SheetTitle className="text-lg font-bold">
+                <SheetTitle className="text-foreground text-lg font-bold">
                   {step === "calendar"
                     ? "Fazer Reserva"
                     : "Informações da Reserva"}
@@ -199,7 +236,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                     {/* Calendário */}
                     <div className="mb-6">
                       <div className="mb-4 flex items-center justify-between">
-                        <h3 className="text-base font-bold">
+                        <h3 className="text-foreground text-base font-bold">
                           {capitalizedMonth}
                         </h3>
                         <div className="flex gap-2">
@@ -209,7 +246,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                             className="border-border hover:bg-secondary h-8 w-8 rounded-full bg-transparent"
                             onClick={handlePrevMonth}
                           >
-                            <ChevronLeft className="h-4 w-4" />
+                            <ChevronLeft className="text-foreground h-4 w-4" />
                           </Button>
                           <Button
                             variant="outline"
@@ -217,7 +254,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                             className="border-border hover:bg-secondary h-8 w-8 rounded-full bg-transparent"
                             onClick={handleNextMonth}
                           >
-                            <ChevronRight className="h-4 w-4" />
+                            <ChevronRight className="text-foreground h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -245,7 +282,19 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                             >
                               <button
                                 onClick={() => handleDateClick(dayObj.date)}
-                                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-all ${isSelectedDay ? "bg-primary text-primary-foreground" : ""} ${!dayObj.currentMonth && !isSelectedDay ? "text-muted-foreground/30" : "text-foreground"} ${dayObj.currentMonth && !isSelectedDay ? "hover:bg-secondary cursor-pointer" : ""} `}
+                                className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-medium transition-all ${
+                                  isSelectedDay
+                                    ? "bg-primary text-primary-foreground"
+                                    : ""
+                                } ${
+                                  !dayObj.currentMonth && !isSelectedDay
+                                    ? "text-muted-foreground/30"
+                                    : "text-foreground"
+                                } ${
+                                  dayObj.currentMonth && !isSelectedDay
+                                    ? "hover:bg-secondary cursor-pointer"
+                                    : ""
+                                } `}
                               >
                                 {dayObj.date.getDate()}
                               </button>
@@ -266,7 +315,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                               className={`rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-all ${
                                 selectedTime === time
                                   ? "border-primary bg-primary text-primary-foreground"
-                                  : "text-muted-foreground border-border hover:bg-secondary bg-transparent"
+                                  : "border-border text-muted-foreground hover:bg-secondary bg-transparent"
                               } `}
                             >
                               {time}
@@ -278,13 +327,13 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
 
                     {/* Resumo do Pedido */}
                     {selectedTime && date && (
-                      <Card className="rounded-xl border p-4 shadow-sm">
+                      <Card className="border-border rounded-xl border p-4 shadow-sm">
                         <CardContent className="flex flex-col gap-3 p-0">
                           <div className="flex items-center justify-between">
-                            <h3 className="text-base font-bold">
+                            <h3 className="text-foreground text-base font-bold">
                               {service.name}
                             </h3>
-                            <span className="text-base font-bold">
+                            <span className="text-foreground text-base font-bold">
                               {Intl.NumberFormat("pt-BR", {
                                 style: "currency",
                                 currency: "BRL",
@@ -325,12 +374,11 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
 
                   <SheetFooter className="border-border bg-background border-t p-5">
                     <Button
-                      variant="default"
                       className="h-12 w-full rounded-xl text-base font-bold"
-                      disabled={!selectedTime || !date}
+                      disabled={!selectedTime || !date || isPending}
                       onClick={handleBookingSubmit}
                     >
-                      Confirmar
+                      {isPending ? "Confirmando..." : "Confirmar"}
                     </Button>
                   </SheetFooter>
                 </>
@@ -350,13 +398,15 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
 
                       {/* Card flutuante com info da barbearia */}
                       <div className="absolute right-4 bottom-4 left-4 w-[calc(100%-32px)]">
-                        <Avatar className="top-16 left-5 h-[43px] w-[43px] ">
-                          <AvatarImage src={barbershop.imageUrl} />
-                          <AvatarFallback>{barbershop.name[0]}</AvatarFallback>
-                        </Avatar>
-                        <Card className="flex items-center gap-3 rounded-lg py-5 shadow-sm">
+                        <Card className="bg-card border-border flex items-center gap-3 rounded-lg p-3 shadow-sm">
+                          <Avatar>
+                            <AvatarImage src={barbershop.imageUrl} />
+                            <AvatarFallback>
+                              {barbershop.name[0]}
+                            </AvatarFallback>
+                          </Avatar>
                           <div className="flex flex-col overflow-hidden">
-                            <h3 className="truncate font-bold">
+                            <h3 className="text-foreground truncate font-bold">
                               {barbershop.name}
                             </h3>
                             <p className="text-muted-foreground truncate overflow-hidden text-xs text-nowrap text-ellipsis">
@@ -368,23 +418,23 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                     </Card>
 
                     {/* Badge Confirmado - Alinhado à esquerda */}
-                    <div className="mt-6 mb-4">
+                    <div className="mt-6 mb-6">
                       <Badge
                         variant="secondary"
-                        className="bg-secondary hover:bg-secondary text-primary rounded-full px-3 py-1"
+                        className="bg-secondary text-primary hover:bg-secondary rounded-full px-3 py-1"
                       >
                         CONFIRMADO
                       </Badge>
                     </div>
 
                     {/* Detalhes da Reserva */}
-                    <Card className="mb-6 rounded-xl border p-4 shadow-sm">
+                    <Card className="border-border mb-6 rounded-xl border p-4 shadow-sm">
                       <CardContent className="flex flex-col gap-3 p-0">
                         <div className="flex items-center justify-between">
-                          <h3 className="text-base font-bold">
+                          <h3 className="text-foreground text-base font-bold">
                             {service.name}
                           </h3>
-                          <span className="text-base font-bold">
+                          <span className="text-foreground text-base font-bold">
                             {Intl.NumberFormat("pt-BR", {
                               style: "currency",
                               currency: "BRL",
@@ -429,13 +479,15 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                           className="flex items-center justify-between"
                         >
                           <div className="flex items-center gap-2">
-                            <i className="fi fi-rr-smartphone text-foreground"></i>
-                            <span className="text-sm">{phone}</span>
+                            <Smartphone className="text-foreground h-4 w-4" />
+                            <span className="text-foreground text-sm">
+                              {phone}
+                            </span>
                           </div>
                           <Button
                             variant="outline"
                             size="sm"
-                            className="rounded-full"
+                            className="border-border text-foreground hover:bg-secondary rounded-full"
                             onClick={() => copyToClipboard(phone)}
                           >
                             Copiar
@@ -448,14 +500,14 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                   <SheetFooter className="border-border bg-background flex flex-row gap-3 border-t p-5">
                     <Button
                       variant="outline"
-                      className="h-12 flex-1 rounded-xl text-base font-bold"
+                      className="border-border text-foreground hover:bg-secondary h-12 flex-1 rounded-xl text-base font-bold"
                       onClick={handleBack}
                     >
                       Voltar
                     </Button>
                     <Button
                       variant="destructive"
-                      className="h-12 flex-1 rounded-xl text-base font-bold"
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-12 flex-1 rounded-xl text-base font-bold"
                       onClick={handleCancel}
                     >
                       Cancelar Reserva
