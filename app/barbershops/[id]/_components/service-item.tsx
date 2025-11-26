@@ -13,7 +13,7 @@ import {
 import { Barbershop, BarbershopService } from "@/app/generated/prisma/client";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Smartphone } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Badge } from "@/app/_components/ui/badge";
 import { useAction } from "next-safe-action/hooks";
 import {
@@ -23,6 +23,8 @@ import {
 } from "@/app/_components/ui/avatar";
 import { createBooking } from "@/app/_actions/create-booking";
 import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
+import { getDateAvailableTimeSlots } from "@/app/_actions/get-date-available-time-slots";
 
 interface ServiceItemProps {
   service: BarbershopService;
@@ -38,6 +40,16 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
+  // Query para buscar horários disponíveis
+  const { data: availableTimesSlots, isFetching } = useQuery({
+    queryKey: ["date-available-time-slots", service.babershopId, date],
+    queryFn: () =>
+      getDateAvailableTimeSlots({
+        babershopId: service.babershopId,
+        date: date!,
+      }),
+    enabled: !!date,
+  });
 
   const { executeAsync, isPending } = useAction(createBooking, {
     onSuccess: () => {
@@ -49,27 +61,9 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     },
   });
 
-  const timeList = [
-    "09:00",
-    "09:30",
-    "10:00",
-    "10:30",
-    "11:00",
-    "11:30",
-    "12:00",
-    "12:30",
-    "13:00",
-    "13:30",
-    "14:00",
-    "14:30",
-    "15:00",
-    "15:30",
-    "16:00",
-    "16:30",
-    "17:00",
-    "17:30",
-    "18:00",
-  ];
+  // Lista de horários estática removida em favor da dinâmica
+  // Se availableTimesSlots for undefined (carregando ou erro), usamos array vazio
+  const timeList = availableTimesSlots || [];
 
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -308,19 +302,33 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                     {date && (
                       <div className="mb-6">
                         <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
-                          {timeList.map((time) => (
-                            <button
-                              key={time}
-                              onClick={() => setSelectedTime(time)}
-                              className={`rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-all ${
-                                selectedTime === time
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border text-muted-foreground hover:bg-secondary bg-transparent"
-                              } `}
-                            >
-                              {time}
-                            </button>
-                          ))}
+                          {isFetching ? (
+                            <div className="flex w-full items-center justify-center p-4">
+                              <span className="text-muted-foreground text-xs">
+                                Carregando horários...
+                              </span>
+                            </div>
+                          ) : timeList.length > 0 ? (
+                            timeList.map((time) => (
+                              <button
+                                key={time}
+                                onClick={() => setSelectedTime(time)}
+                                className={`rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-all ${
+                                  selectedTime === time
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border text-muted-foreground hover:bg-secondary bg-transparent"
+                                } `}
+                              >
+                                {time}
+                              </button>
+                            ))
+                          ) : (
+                            <div className="flex w-full items-center justify-center p-4">
+                              <span className="text-muted-foreground text-xs">
+                                Não há horários disponíveis para este dia.
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
