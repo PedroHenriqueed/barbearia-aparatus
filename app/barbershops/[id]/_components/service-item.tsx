@@ -13,7 +13,7 @@ import {
 import { Barbershop, BarbershopService } from "@/app/generated/prisma/client";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Smartphone } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Badge } from "@/app/_components/ui/badge";
 import { useAction } from "next-safe-action/hooks";
 import {
@@ -23,8 +23,9 @@ import {
 } from "@/app/_components/ui/avatar";
 import { createBooking } from "@/app/_actions/create-booking";
 import { toast } from "sonner";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDateAvailableTimeSlots } from "@/app/_actions/get-date-available-time-slots";
+
 
 interface ServiceItemProps {
   service: BarbershopService;
@@ -32,6 +33,7 @@ interface ServiceItemProps {
 }
 
 export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
+  const queryClient = useQueryClient();
   const [sheetIsOpen, setSheetIsOpen] = useState(false);
   const [step, setStep] = useState<"calendar" | "confirmation">("calendar");
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
@@ -40,7 +42,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
 
-  // Query para buscar horários disponíveis
+  // Busca horários disponíveis no servidor
   const { data: availableTimesSlots, isFetching } = useQuery({
     queryKey: ["date-available-time-slots", service.babershopId, date],
     queryFn: () =>
@@ -54,6 +56,10 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const { executeAsync, isPending } = useAction(createBooking, {
     onSuccess: () => {
       toast.success("Agendamento criado com sucesso!");
+      // Invalida a query para forçar uma atualização imediata da lista de horários
+      queryClient.invalidateQueries({
+        queryKey: ["date-available-time-slots"],
+      });
       setStep("confirmation");
     },
     onError: ({ error }) => {
@@ -61,8 +67,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     },
   });
 
-  // Lista de horários estática removida em favor da dinâmica
-  // Se availableTimesSlots for undefined (carregando ou erro), usamos array vazio
+  // Usa a lista do servidor se disponível, senão array vazio
   const timeList = availableTimesSlots || [];
 
   const calendarDays = useMemo(() => {
@@ -109,11 +114,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     setSelectedTime(undefined);
   };
 
-  const handleBookingSubmit = () => {
-    handleConfirm();
-  };
-
-  const handleConfirm = async () => {
+  const handleBookingSubmit = async () => {
     if (!selectedTime || !date) return;
 
     const timeParts = selectedTime.split(":");
@@ -131,6 +132,8 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
 
   const handleBack = () => {
     setStep("calendar");
+    // Opcional: Limpar a seleção ao voltar para o calendário
+    setSelectedTime(undefined);
   };
 
   const handleCancel = () => {
