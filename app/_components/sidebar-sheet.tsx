@@ -46,7 +46,7 @@ export default function SidebarSheet({ children }: SidebarSheetProps) {
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent className="overflow-y-auto [&::-webkit-scrollbar]:hidden">
-        <SheetHeader className="p-5 text-left border-b border-solid border-secondary">
+        <SheetHeader className="border-secondary border-b border-solid p-5 text-left">
           <SheetTitle>Menu</SheetTitle>
         </SheetHeader>
 
@@ -70,7 +70,11 @@ export default function SidebarSheet({ children }: SidebarSheetProps) {
               <div className="flex-1">
                 <h2 className="text-lg font-semibold">Olá. Faça seu login!</h2>
               </div>
-              <Button onClick={handleLogin} size="icon" className="px-13 py-3 border rounded-full">
+              <Button
+                onClick={handleLogin}
+                size="icon"
+                className="rounded-full border px-13 py-3"
+              >
                 Login
                 <LogInIcon size={18} />
               </Button>
@@ -90,7 +94,7 @@ export default function SidebarSheet({ children }: SidebarSheetProps) {
           </SheetClose>
           <SheetClose asChild>
             <Button className="justify-start gap-2" variant="ghost" asChild>
-              <Link href="">
+              <Link href="/bookings">
                 <Calendar size={18} />
                 Agendamentos
               </Link>

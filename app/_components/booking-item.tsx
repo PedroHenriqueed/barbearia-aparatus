@@ -1,51 +1,64 @@
-import { Card } from "./ui/card";
-import { Badge } from "./ui/badge";
-import { AvatarImage, Avatar } from "./ui/avatar";
+"use client";
 
+import { Card} from "./ui/card";
+import { Badge } from "./ui/badge";
+import { AvatarImage, Avatar} from "./ui/avatar";
+import { Prisma } from "@/app/generated/prisma/client";
+import { format, isFuture } from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+// Define o tipo esperado com as relações incluídas
 interface BookingItemProps {
- serivceName: string;
- barbeshopName: string;
- barbershopImageUrl: string;
- date: Date;
+  booking: Prisma.BookingGetPayload<{
+    include: {
+      service: true;
+      barbershop: true;
+    };
+  }>;
 }
 
+const BookingItem = ({ booking }: BookingItemProps) => {
+  // Um agendamento é confirmado se a data for futura. Caso contrário, é finalizado.
+  const isBookingConfirmed = isFuture(booking.date);
 
-const bookingItem = ({
-    serivceName, barbeshopName, barbershopImageUrl, date}: BookingItemProps) => {
   return (
-    <Card className="flex flex-row items-center justify-between w-full min-w-full p-0">
-        {/* ESQUERDA */}
-        <div className="flex flex-col gap-4 flex-1 p-4">
-            <Badge 
-            variant="secondary"
-            className="bg-secondary hover:bg-secondary text-primary rounded-full px-3 py-1"
-            >
-                CONFIRMADO
-            </Badge>
+    <Card className="flex w-full min-w-full flex-row items-center justify-between p-0">
+      {/* ESQUERDA */}
+      <div className="flex flex-1 flex-col gap-4 p-4">
+        <Badge
+          className={`w-fit rounded-full px-3 py-1 text-xs font-bold ${
+            isBookingConfirmed
+              ? "bg-primary hover:bg-primary text-card rounded-full px-3 py-1"
+              : "bg-secondary text-muted-foreground hover:bg-secondary"
+          }`}
+        >
+          {isBookingConfirmed ? "CONFIRMADO" : "FINALIZADO"}
+        </Badge>
         <div className="flex flex-col gap-2">
-            <p className="font-bold">{serivceName}</p>
-            <div className="flex items-center gap-2 ">
+          <p className="font-bold">{booking.barbershop.name}</p>
+          <div className="flex items-center gap-2">
             <Avatar className="h-6 w-6">
-                       <AvatarImage src={barbershopImageUrl} />
-                </Avatar>
-                <p className="text-sm text-muted-foreground">{barbeshopName}</p>
-            </div>
-        </div>
-        </div>
-        {/* DIREITA */}
-        <div className="flex flex-col items-center justify-center p-4 h-full border-l py-3">
-            <p className="text-xs capitalize">
-                {date.toLocaleDateString('pt-BR', {month: 'long'})}
+              <AvatarImage src={booking.barbershop.imageUrl} />
+            </Avatar>
+            <p className="text-muted-foreground text-sm">
+              {booking.barbershop.name}
             </p>
-            <p className="text-2xl">
-                {date.toLocaleDateString ('pt-BR',{day: '2-digit'})}
-            </p>
-            <p className="text-xs capitalize">
-                {date.toLocaleTimeString ('pt-BR',{hour: '2-digit', minute: '2-digit'})}
-            </p>
+          </div>
         </div>
+      </div>
+      {/* DIREITA */}
+      <div className="border-secondary flex w-[100px] flex-col items-center justify-center border-l border-solid px-5 py-5">
+        <p className="text-foreground text-sm capitalize">
+          {format(booking.date, "MMMM", { locale: ptBR })}
+        </p>
+        <p className="text-foreground text-2xl font-bold">
+          {format(booking.date, "dd")}
+        </p>
+        <p className="text-foreground text-sm capitalize">
+          {format(booking.date, "HH:mm")}
+        </p>
+      </div>
     </Card>
-    
-  )
-}   
-export default bookingItem;
+  );
+};
+export default BookingItem;

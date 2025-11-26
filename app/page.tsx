@@ -1,65 +1,93 @@
-import Header from './_components/header'; 
-import SearchInput from './_components/search-input';
-import Image from 'next/image';
-import banner from '../public/banner.png';
-import BookingItem from './_components/booking-item';
-import { prisma } from '@/lib/prisma';
-import BarbershopItem from './_components/barbershop-item';
-import Footer from './_components/ui/footer';
-import { PageContainer, PageSectionTitle, PageSection, PageScrollContainer } from './_components/ui/page';
+import Header from "./_components/header";
+import SearchInput from "./_components/search-input";
+import Image from "next/image";
+import banner from "../public/banner.png";
+import BookingItem from "./_components/booking-item";
+import { prisma } from "@/lib/prisma";
+import BarbershopItem from "./_components/barbershop-item";
+import Footer from "./_components/ui/footer";
+import {
+  PageContainer,
+  PageSectionTitle,
+  PageSection,
+  PageScrollContainer,
+} from "./_components/ui/page";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
-const Home = async() => {
+const Home = async () => {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   const recommendedBarbershops = await prisma.barbershop.findMany({
     orderBy: {
-      name: 'asc'
+      name: "asc",
     },
   });
   const popularBarbershops = await prisma.barbershop.findMany({
     orderBy: {
-      name: 'desc'
+      name: "desc",
     },
   });
+
+  // Busca o último agendamento confirmado para exibir na home, se o usuário estiver logado
+  const confirmedBooking = session?.user
+    ? await prisma.booking.findFirst({
+        where: {
+          userId: session.user.id,
+          date: {
+            gte: new Date(),
+          },
+        },
+        include: {
+          service: true,
+          barbershop: true,
+        },
+        orderBy: {
+          date: "asc",
+        },
+      })
+    : null;
+
   return (
     <main>
-      <Header/>
+      <Header />
       <PageContainer>
-      <SearchInput/>
-      <Image src={banner} alt="Agende agora" sizes="100vw" className='h-auto w- w-full' 
-      />
-      <PageSection>
-      <PageSectionTitle>Agendamentos</PageSectionTitle>
-      <BookingItem
-      serivceName="Corte de Cabelo" 
-      barbeshopName="Barbearia do Zé"
-      barbershopImageUrl="https://utfs.io/f/0ddfbd26-a424-43a0-aaf3-c3f1dc6be6d1-1kgxo7.png"
-      date={new Date()}     
-      />
-      </PageSection>
-
-      <PageSection>
-      <PageSectionTitle>
-        Recomendados
-      </PageSectionTitle>
-      <PageScrollContainer>  
-      {recommendedBarbershops.map((barbershop) => (
-        <BarbershopItem key={barbershop.id} barbershop={barbershop}
+        <SearchInput />
+        <Image
+          src={banner}
+          alt="Agende agora"
+          sizes="100vw"
+          className="w- h-auto w-full"
         />
-      ))}
-      </PageScrollContainer>      
-      </PageSection> 
+          {confirmedBooking && (
+          <PageSection>
+            <PageSectionTitle>Agendamentos</PageSectionTitle>
+            <BookingItem booking={confirmedBooking} />
+          </PageSection>
+      )}
 
-      <PageSection>
-      <PageSectionTitle>Populares</PageSectionTitle> 
-      <PageScrollContainer>
-      {popularBarbershops.map((barbershop) => (
-        <BarbershopItem key={barbershop.id} barbershop={barbershop}
-        />
-      ))}
-      </PageScrollContainer>    
-      </PageSection>
-    </PageContainer>    
-    <Footer/>
-  </main>
+        <PageSection>
+          <PageSectionTitle>Recomendados</PageSectionTitle>
+          <PageScrollContainer>
+            {recommendedBarbershops.map((barbershop) => (
+              <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+            ))}
+          </PageScrollContainer>
+        </PageSection>
+
+        <PageSection>
+          <PageSectionTitle>Populares</PageSectionTitle>
+          <PageScrollContainer>
+            {popularBarbershops.map((barbershop) => (
+              <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+            ))}
+          </PageScrollContainer>
+        </PageSection>
+      </PageContainer>
+      <Footer />
+    </main>
   );
 };
 export default Home;

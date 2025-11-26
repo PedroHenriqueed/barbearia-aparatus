@@ -22,6 +22,7 @@ model Barbershop {
   imageUrl    String
   phones      String[]
   services    BarbershopService[]
+  bookings    Booking[]
 }
 
 model BarbershopService {
@@ -32,14 +33,17 @@ model BarbershopService {
   babershopId  String
   barbershop   Barbershop @relation(fields: [babershopId], references: [id])
   priceInCents Int
+  bookings     Booking[]
 }
 
 model Booking {
   id          String    @id @default(uuid())
-  userId      String    // Campo adicionado
-  user        User      @relation(fields: [userId], references: [id]) // Relacionamento adicionado
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
   servicesId  String
+  service     BarbershopService @relation(fields: [servicesId], references: [id])
   babershopId String
+  barbershop  Barbershop @relation(fields: [babershopId], references: [id])
   date        DateTime  @db.Timestamptz
   cancelled   Boolean?  @default(false)
   cancelledAt DateTime? @db.Timestamptz
@@ -55,7 +59,7 @@ model User {
   updatedAt     DateTime  @default(now()) @updatedAt
   sessions      Session[]
   accounts      Account[]
-  bookings      Booking[] // Relacionamento inverso adicionado
+  bookings      Booking[]
 
   @@unique([email])
   @@map("user")
