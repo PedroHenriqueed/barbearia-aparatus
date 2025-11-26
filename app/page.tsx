@@ -31,7 +31,8 @@ const Home = async () => {
     },
   });
 
-  // Busca o último agendamento confirmado para exibir na home, se o usuário estiver logado
+  // Busca o último agendamento confirmado para exibir na home.
+  // Filtra por usuário, data futura E que NÃO esteja cancelado.
   const confirmedBooking = session?.user
     ? await prisma.booking.findFirst({
         where: {
@@ -39,6 +40,7 @@ const Home = async () => {
           date: {
             gte: new Date(),
           },
+          cancelled: false, // Adicionado: Só busca se não estiver cancelado
         },
         include: {
           service: true,
@@ -55,18 +57,23 @@ const Home = async () => {
       <Header />
       <PageContainer>
         <SearchInput />
-        <Image
-          src={banner}
-          alt="Agende agora"
-          sizes="100vw"
-          className="w- h-auto w-full"
-        />
-          {confirmedBooking && (
+
+        <div className="mt-6">
+          <Image
+            src={banner}
+            alt="Agende agora"
+            sizes="100vw"
+            className="h-auto w-full rounded-xl"
+          />
+        </div>
+
+        {/* Se não houver booking confirmado (futuro e não cancelado), esta seção não renderiza */}
+        {confirmedBooking && (
           <PageSection>
             <PageSectionTitle>Agendamentos</PageSectionTitle>
             <BookingItem booking={confirmedBooking} />
           </PageSection>
-      )}
+        )}
 
         <PageSection>
           <PageSectionTitle>Recomendados</PageSectionTitle>
