@@ -15,12 +15,13 @@ import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useAction } from "next-safe-action/hooks";
-import { createBooking } from "@/app/_actions/create-booking";
+import { createBookingCheckoutSession } from "@/app/_actions/create-booking-checkout-session"; // Nova Action
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDateAvailableTimeSlots } from "@/app/_actions/get-date-available-time-slots";
 import { format, set } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRouter } from "next/navigation"; // Importar useRouter
 
 interface ServiceItemProps {
   service: BarbershopService;
@@ -28,6 +29,7 @@ interface ServiceItemProps {
 }
 
 export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [sheetIsOpen, setSheetIsOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
@@ -47,19 +49,17 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     enabled: !!date,
   });
 
-  const { executeAsync, isPending } = useAction(createBooking, {
-    onSuccess: () => {
-      toast.success("Agendamento criado com sucesso!");
-      // Invalida a query para forçar uma atualização imediata da lista de horários
-      queryClient.invalidateQueries({
-        queryKey: ["date-available-time-slots"],
-      });
-      setSheetIsOpen(false);
-      setSelectedTime(undefined);
-      setDate(new Date());
+  // Hook para a action de checkout
+  const { executeAsync, isPending } = useAction(createBookingCheckoutSession, {
+    onSuccess: ({ data }) => {
+      if (data?.url) {
+        router.push(data.url); // Redireciona para o Stripe
+      } else {
+        toast.error("Erro ao criar sessão de pagamento.");
+      }
     },
     onError: ({ error }) => {
-      toast.error(error.serverError || "Erro ao criar agendamento.");
+      toast.error(error.serverError || "Erro ao iniciar pagamento.");
     },
   });
 
@@ -122,6 +122,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
       minutes: minute,
     });
 
+    // Chama a action de checkout
     await executeAsync({
       serviceId: service.id,
       date: bookingDate,
@@ -361,7 +362,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                   disabled={!selectedTime || !date || isPending}
                   onClick={handleBookingSubmit}
                 >
-                  {isPending ? "Confirmando..." : "Confirmar"}
+                  {isPending ? "Redirecionando para pagamento..." : "Confirmar"}
                 </Button>
               </SheetFooter>
             </SheetContent>

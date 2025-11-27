@@ -16,3 +16,6 @@ SEMPRE use a biblioteca "next-safe-action" pkara criar Server Actions.
 SEMPRE use o hook "useAction" da biblioteca "next-safe-action" para chamar uma Server Action
 SEMPRE faça validações de autorização e autenticação em uma Server Action conforme o usuário
 SEMPRE crie as server actions na pasta @app\_actions
+
+
+
