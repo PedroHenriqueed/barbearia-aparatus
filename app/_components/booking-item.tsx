@@ -22,6 +22,17 @@ import { useAction } from "next-safe-action/hooks";
 import { cancelBooking } from "../_actions/cancel-booking";
 import { toast } from "sonner";
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 
 interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
@@ -44,7 +55,8 @@ const BookingItem = ({ booking }: BookingItemProps) => {
     },
   });
 
-  // Lógica atualizada: Confirmado APENAS se for futuro E não estiver cancelado
+  // Lógica: Confirmado SE (futuro E não cancelado).
+  // Qualquer outro caso (passado OU cancelado) é tratado como "Finalizado" visualmente.
   const isBookingConfirmed = isFuture(booking.date) && !booking.cancelled;
 
   const handleCancelBooking = async () => {
@@ -64,11 +76,11 @@ const BookingItem = ({ booking }: BookingItemProps) => {
         <Card className="bg-card hover:bg-secondary/10 min-w-full cursor-pointer rounded-xl border shadow-sm transition-colors">
           <CardContent className="flex justify-between p-0">
             {/* ESQUERDA */}
-            <div className="flex flex-col gap-3 py-1 pl-5">
+            <div className="flex flex-col gap-3 py-5 pl-5">
               <Badge
                 className={`w-fit rounded-full px-3 py-1 text-xs font-bold shadow-none ${
                   isBookingConfirmed
-                    ? "bg-primary hover:bg-primary text-card rounded-full px-3 py-1"
+                    ? "bg-primary/10 text-primary hover:bg-primary/10"
                     : "bg-secondary text-muted-foreground hover:bg-secondary"
                 }`}
               >
@@ -93,7 +105,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </div>
 
             {/* DIREITA - DATA */}
-            <div className="border-border flex w-[120px] flex-col items-center justify-center border-l px-1 py-1">
+            <div className="border-border flex w-[120px] flex-col items-center justify-center border-l px-5 py-5">
               <p className="text-foreground text-sm capitalize">
                 {format(booking.date, "MMMM", { locale: ptBR })}
               </p>
@@ -228,16 +240,40 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </Button>
           </SheetClose>
 
-          {/* Botão de cancelar só aparece se estiver CONFIRMADO */}
+          {/* Botão de cancelar (agora com AlertDialog) */}
           {isBookingConfirmed && (
-            <Button
-              variant="destructive"
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-12 flex-1 rounded-xl text-base font-bold"
-              onClick={handleCancelBooking}
-              disabled={isPending}
-            >
-              {isPending ? "Cancelando..." : "Cancelar Reserva"}
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-12 flex-1 rounded-xl text-base font-bold"
+                  disabled={isPending}
+                >
+                  Cancelar Reserva
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent className="border-borde w-[90%] rounded-xl">
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Essa ação não pode ser desfeita. Isso cancelará
+                    permanentemente sua reserva.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter className="flex-row gap-3">
+                  <AlertDialogCancel className="mt-0 h-10 w-40">
+                    Voltar
+                  </AlertDialogCancel>
+                  <AlertDialogAction
+                    disabled={isPending}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 w-40"
+                    onClick={handleCancelBooking}
+                  >
+                    {isPending ? "Cancelando..." : "Confirmar"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
         </SheetFooter>
       </SheetContent>
