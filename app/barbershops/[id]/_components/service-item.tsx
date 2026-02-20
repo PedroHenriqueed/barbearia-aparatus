@@ -21,6 +21,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDateAvailableTimeSlots } from "@/app/_actions/get-date-available-time-slots";
 import { format, set } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation"; // Importar useRouter
 
 interface ServiceItemProps {
@@ -31,6 +32,10 @@ interface ServiceItemProps {
 export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  // 👉 ESSA É A LINHA QUE ESTÁ FALTANDO:
+  const { data: session } = authClient.useSession();
+
   const [sheetIsOpen, setSheetIsOpen] = useState(false);
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
     undefined,
@@ -111,6 +116,14 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   };
 
   const handleBookingSubmit = async () => {
+    if (!session?.user) {
+      toast.error("Você precisa fazer login para reservar!");
+      await authClient.signIn.social({
+        provider: "google",
+      });
+      return;
+    }
+
     if (!selectedTime || !date) return;
 
     const timeParts = selectedTime.split(":");
@@ -122,7 +135,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
       minutes: minute,
     });
 
-    // Chama a action de checkout
+    // Chama APENAS o Stripe. O Webhook fará o resto!
     await executeAsync({
       serviceId: service.id,
       date: bookingDate,

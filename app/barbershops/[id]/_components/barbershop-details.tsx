@@ -98,25 +98,30 @@ export default function BarbershopDetails({
               CONTATO
             </h2>
             <div className="flex flex-col gap-2">
-              {barbershop.phones.map((phone) => (
-                <div
-                  key={phone}
-                  className="flex items-center justify-between gap-2"
-                >
-                  <div className="flex items-center gap-2">
-                    <i className="fi fi-rr-smartphone text-foreground"></i>
-                    <span className="text-foreground text-sm">{phone}</span>
-                  </div>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="rounded-full px-4 text-xs font-bold"
-                    onClick={() => copyToClipboard(phone)}
+              {barbershop.phones.map(
+                (
+                  phone,
+                  index, // 1. Adicione o index aqui
+                ) => (
+                  <div
+                    key={`${phone}-${index}`} // 2. Junte o telefone com o index para a key ser única
+                    className="flex items-center justify-between gap-2"
                   >
-                    Copiar
-                  </Button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-2">
+                      <i className="fi fi-rr-smartphone text-foreground"></i>
+                      <span className="text-foreground text-sm">{phone}</span>
+                    </div>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="rounded-full px-4 text-xs font-bold"
+                      onClick={() => copyToClipboard(phone)}
+                    >
+                      Copiar
+                    </Button>
+                  </div>
+                ),
+              )}
             </div>
           </div>
         </CardContent>

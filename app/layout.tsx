@@ -25,13 +25,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <head></head>
-      <link
-        rel="stylesheet"
-        href="https://cdn-uicons.flaticon.com/2.5.1/uicons-regular-rounded/css/uicons-regular-rounded.css"
-        precedence="default"
-      />
+    // 1. Adicionado suppressHydrationWarning aqui
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        {/* 2. O <link> agora está DENTRO do <head> */}
+        <link
+          rel="stylesheet"
+          href="https://cdn-uicons.flaticon.com/2.5.1/uicons-regular-rounded/css/uicons-regular-rounded.css"
+          precedence="default"
+        />
+      </head>
       <body className={`${jakarta.variable} ${geistMono.variable} antialiased`}>
         <QueryProvider>
           {children}

@@ -40,7 +40,6 @@ const Home = async () => {
           date: {
             gte: new Date(),
           },
-          cancelled: false, // Adicionado: Só busca se não estiver cancelado
         },
         include: {
           service: true,

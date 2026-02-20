@@ -3,22 +3,22 @@
 import { prisma } from "@/lib/prisma";
 import { endOfDay, startOfDay } from "date-fns";
 
-
 export const getDateAvailableTimeSlots = async ({
-  babershopId,
+  barbershopId, // CORRIGIDO: adicionado o "r"
   date,
 }: {
-  babershopId: string;
-  date: Date;
+  barbershopId: string; // CORRIGIDO
+  date: Date | string;
 }) => {
+  const dateObj = new Date(date);
 
   // Busca todos os agendamentos para aquele dia e barbearia
   const bookings = await prisma.booking.findMany({
     where: {
-      babershopId,
+      barbershopId: barbershopId, // CORRIGIDO AQUI
       date: {
-        gte: startOfDay(date),
-        lte: endOfDay(date),
+        gte: startOfDay(dateObj),
+        lte: endOfDay(dateObj),
       },
     },
   });
@@ -45,13 +45,11 @@ export const getDateAvailableTimeSlots = async ({
     "17:30",
     "18:00",
   ];
+
   // Filtra os horários
   const availableTimeSlots = timeSlots.filter((time) => {
     const [hour, minute] = time.split(":").map(Number);
 
-    // Verifica se existe agendamento neste horário
-    // Nota: Ajuste a lógica de fuso horário se necessário.
-    // Aqui assumimos que booking.date.getHours() retorna a hora compatível com o que foi salvo.
     const hasBooking = bookings.some((booking) => {
       const bookingHour = booking.date.getHours();
       const bookingMinute = booking.date.getMinutes();
@@ -59,17 +57,14 @@ export const getDateAvailableTimeSlots = async ({
       return bookingHour === hour && bookingMinute === minute;
     });
 
-    
     if (hasBooking) {
       return false;
     }
 
-    // Verifica se o horário já passou (apenas se a data selecionada for hoje)
     const now = new Date();
-    const slotDate = new Date(date);
+    const slotDate = new Date(dateObj);
     slotDate.setHours(hour, minute, 0, 0);
 
-    // Se for o mesmo dia, bloqueia horários passados
     if (
       now.getDate() === slotDate.getDate() &&
       now.getMonth() === slotDate.getMonth() &&
