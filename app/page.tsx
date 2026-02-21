@@ -14,6 +14,19 @@ import {
 } from "./_components/ui/page";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { Button } from "./_components/ui/button";
+import Link from "next/link";
+import { Scissors, Eye, Activity, SoapDispenserDroplet } from "lucide-react"; // Importação dos ícones
+
+// Array com os atalhos usando componentes do Lucide
+const quickSearchOptions = [
+  { title: "Cabelo", icon: Scissors },
+  { title: "Barba", imageUrl: "/mdi_mustache.svg" },
+  { title: "Acabamento", imageUrl: "/razor.svg" },
+  { title: "Sobrancelha", imageUrl: "/158079.svg" },
+  { title: "Massagem", icon: Activity },
+  { title: "Hidratação", icon: SoapDispenserDroplet },
+];
 
 const Home = async () => {
   const session = await auth.api.getSession({
@@ -31,8 +44,6 @@ const Home = async () => {
     },
   });
 
-  // Busca o último agendamento confirmado para exibir na home.
-  // Filtra por usuário, data futura E que NÃO esteja cancelado.
   const confirmedBooking = session?.user
     ? await prisma.booking.findFirst({
         where: {
@@ -40,6 +51,7 @@ const Home = async () => {
           date: {
             gte: new Date(),
           },
+          cancelled: false,
         },
         include: {
           service: true,
@@ -57,6 +69,34 @@ const Home = async () => {
       <PageContainer>
         <SearchInput />
 
+        {/* BOTÕES DE BUSCA RÁPIDA */}
+        <div className="mt-6 flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden">
+          {quickSearchOptions.map((option) => (
+            <Button
+              key={option.title}
+              variant="foreground"
+              className="border-border border-2 gap-2 rounded-full font-bold"
+              asChild
+            >
+              <Link href={`/barbershops?search=${option.title}`}>
+                {/* Renderização Condicional: Se tiver imageUrl usa o <Image>, senão usa o Lucide */}
+                {option.imageUrl ? (
+                  <Image
+                    src={option.imageUrl}
+                    width={16}
+                    height={16}
+                    alt={option.title}
+                  />
+                ) : option.icon ? (
+                  <option.icon size={16} />
+                ) : null}
+
+                {option.title}
+              </Link>
+            </Button>
+          ))}
+        </div>
+
         <div className="mt-6">
           <Image
             src={banner}
@@ -66,7 +106,6 @@ const Home = async () => {
           />
         </div>
 
-        {/* Se não houver booking confirmado (futuro e não cancelado), esta seção não renderiza */}
         {confirmedBooking && (
           <PageSection>
             <PageSectionTitle>Agendamentos</PageSectionTitle>
