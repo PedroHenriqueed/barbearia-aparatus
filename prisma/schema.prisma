@@ -47,6 +47,7 @@ model Booking {
   date        DateTime  @db.Timestamptz
   cancelled   Boolean?  @default(false)
   cancelledAt DateTime? @db.Timestamptz
+  paymentId   String?
 }
 
 model User {

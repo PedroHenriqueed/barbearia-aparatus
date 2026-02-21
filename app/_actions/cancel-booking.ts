@@ -7,6 +7,7 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { returnValidationErrors } from "next-safe-action";
+import Stripe from "stripe";
 
 const inputSchema = z.object({
   bookingId: z.string().uuid(),
@@ -39,12 +40,44 @@ export const cancelBooking = actionClient
       });
     }
 
+    // 🔥 NOVO: Integração com o Stripe para fazer o estorno
+    if (booking.paymentId) {
+      try {
+        if (!process.env.STRIPE_SECRET_KEY) {
+          throw new Error("STRIPE_SECRET_KEY is not set");
+        }
+
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+          apiVersion: "2024-12-18.acacia",
+        });
+
+        // Solicita o estorno total da cobrança usando o ID salvo
+        await stripe.refunds.create({
+          charge: booking.paymentId,
+        });
+
+        console.log(
+          `✅ Estorno realizado com sucesso para a cobrança: ${booking.paymentId}`,
+        );
+      } catch (stripeError: any) {
+        console.error(
+          "❌ Erro ao realizar estorno no Stripe:",
+          stripeError.message,
+        );
+        return returnValidationErrors(inputSchema, {
+          _errors: ["Ocorreu um erro ao processar o estorno do pagamento."],
+        });
+      }
+    }
+
+    // Atualiza o status da reserva para cancelada
     await prisma.booking.update({
       where: {
         id: bookingId,
       },
       data: {
         cancelled: true,
+        cancelledAt: new Date(), // Opcional: marca a data exata do cancelamento se quiser
       },
     });
 

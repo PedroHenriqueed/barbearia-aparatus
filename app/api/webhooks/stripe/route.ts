@@ -34,10 +34,21 @@ export async function POST(request: Request) {
 
     if (serviceId && barbershopId && userId && date) {
       try {
-        // Usando a sintaxe CONNECT do Prisma (À prova de erros de digitação!)
+        // 1. RECUPERA O PAYMENT INTENT NA API DO STRIPE
+        // session.payment_intent contém o ID do pagamento que acabou de ser feito
+        const paymentIntent = await stripe.paymentIntents.retrieve(
+          session.payment_intent as string,
+        );
+
+        // 2. EXTRAI O CHARGE ID
+        // latest_charge retorna uma string com o ID da cobrança (ex: ch_3P9Z...)
+        const stripeChargeId = paymentIntent.latest_charge as string;
+
+        // 3. SALVA A RESERVA COM O PAYMENT ID
         await prisma.booking.create({
           data: {
             date: new Date(date),
+            paymentId: stripeChargeId, // Salvando o Charge ID no banco
             user: {
               connect: { id: userId },
             },
@@ -49,7 +60,11 @@ export async function POST(request: Request) {
             },
           },
         });
-        console.log("✅ Reserva criada com sucesso pelo Webhook!");
+
+        console.log(
+          "✅ Reserva criada com sucesso! Charge ID:",
+          stripeChargeId,
+        );
       } catch (dbError: any) {
         console.error("❌ ERRO AO SALVAR RESERVA NO BANCO (Webhook):", dbError);
         return NextResponse.json(
