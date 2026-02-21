@@ -4,7 +4,7 @@ import { SearchIcon } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react"; // 1. Importe o useEffect
 
 interface SearchInputProps {
   defaultSearch?: string;
@@ -14,11 +14,16 @@ export default function SearchInput({ defaultSearch = "" }: SearchInputProps) {
   const router = useRouter();
   const [search, setSearch] = useState(defaultSearch);
 
+  // 2. Adicione este 'vigia' (useEffect)
+  // Toda vez que o usuário clicar num link rápido e a URL mudar,
+  // o defaultSearch muda, e isso atualiza o texto do input automaticamente!
+  useEffect(() => {
+    setSearch(defaultSearch);
+  }, [defaultSearch]);
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!search.trim()) return;
-
-    // Redireciona o usuário para a página de barbearias com o termo de busca
     router.push(`/barbershops?search=${search}`);
   };
 

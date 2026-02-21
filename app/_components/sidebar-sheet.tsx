@@ -103,15 +103,20 @@ export default function SidebarSheet({ children }: SidebarSheetProps) {
         </div>
 
         {/* Categorias de Serviços */}
-        <div className="border-secondary flex flex-col gap-2 border-b border-solid px-3 py-5">
+        <div className="border-secondary flex flex-col gap-3 border-b border-solid px-3 py-5">
           {quickSearchOptions.map((option) => (
+            <SheetClose key={option.title} asChild>
             <Button
               key={option.title}
               className="justify-start gap-2"
               variant="ghost"
+              asChild
             >
-              {option.title}
+              <Link href={`/barbershops?search=${option.title}`}>
+                {option.title}
+              </Link>
             </Button>
+            </SheetClose>
           ))}
         </div>
 
