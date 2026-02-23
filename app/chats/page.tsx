@@ -2,38 +2,32 @@
 
 import { ChevronLeft, Sparkles, Send, Loader2, Mic } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import ReactMarkdown from "react-markdown";
 
-// Tipo para as mensagens (para não depender da biblioteca quebrada)
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
 export default function ChatPage() {
-  const router = useRouter();
-
-  // 1. Estados nativos do React
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "welcome-message",
       role: "assistant",
-      content: "Olá! Sou o Aparatus, seu assistente pessoal.\n\nEstou aqui para te auxiliar a agendar seu corte ou barba, encontrar as barbearias disponíveis perto de você e responder às suas dúvidas.",
+      content:
+        "Olá! Sou o Aparatus, seu assistente pessoal.\n\nEstou aqui para te auxiliar a agendar seu corte ou barba, encontrar as barbearias disponíveis perto de você e responder às suas dúvidas.",
     },
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // 2. Auto-scroll
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // 3. Nossa função mágica de envio usando Fetch nativo
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!inputValue || inputValue.trim() === "") return;
 
-    // A. Salva a mensagem do usuário na tela e limpa o campo
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
@@ -45,26 +39,39 @@ export default function ChatPage() {
     setIsLoading(true);
 
     try {
-      // B. Envia para o nosso próprio backend (route.ts)
       const response = await fetch("/api/chats", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // Enviamos o histórico todo no formato exato que a IA espera
         body: JSON.stringify({ messages: currentMessages }),
       });
 
       if (!response.ok) throw new Error("Erro na API");
 
-      // C. A mágica de ler a resposta da IA como texto (sem bibliotecas)
-      const text = await response.text();
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let assistantText = "";
+      const assistantId = (Date.now() + 1).toString();
 
-      // D. Salva a resposta da IA na tela
       setMessages((prev) => [
         ...prev,
-        { id: (Date.now() + 1).toString(), role: "assistant", content: text },
+        { id: assistantId, role: "assistant", content: "" },
       ]);
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value);
+        assistantText += chunk;
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m.id === assistantId ? { ...m, content: assistantText } : m,
+          ),
+        );
+      }
     } catch (error) {
-      console.error("Erro ao enviar mensagem:", error);
+      console.error("❌ Erro:", error);
       alert("Ocorreu um erro. Tente enviar de novo.");
     } finally {
       setIsLoading(false);
@@ -76,9 +83,8 @@ export default function ChatPage() {
       {/* CABEÇALHO */}
       <header className="flex items-center justify-between border-b border-solid border-gray-100 p-5">
         <Link href="/">
-        <ChevronLeft size={24} className="text-gray-600 hover:text-black" />
+          <ChevronLeft size={24} className="text-gray-600 hover:text-black" />
         </Link>
-
         <h1 className="flex-none grow-0 text-center font-['Merriweather'] text-[20px] leading-[140%] font-normal tracking-[-0.05em] text-black italic">
           Aparatus
         </h1>
@@ -106,14 +112,29 @@ export default function ChatPage() {
                 </div>
               )}
               <div
-                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm whitespace-pre-wrap ${
+                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
                   m.role === "user"
                     ? "rounded-tr-sm bg-gray-100 text-gray-800"
                     : "rounded-tl-sm border border-gray-100 text-gray-800"
                 }`}
               >
-                {/* Nossa propriedade 'content' agora é 100% garantida */}
-                {m.content}
+                {m.content === "" && m.role === "assistant" ? (
+                  <Loader2 size={16} className="animate-spin text-gray-400" />
+                ) : m.role === "assistant" ? (
+                  <ReactMarkdown
+                    components={{
+                      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+                      ul: ({ children }) => <ul className="ml-4 list-disc space-y-1">{children}</ul>,
+                      ol: ({ children }) => <ol className="ml-4 list-decimal space-y-1">{children}</ol>,
+                      li: ({ children }) => <li>{children}</li>,
+                      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                    }}
+                  >
+                    {m.content}
+                  </ReactMarkdown>
+                ) : (
+                  m.content
+                )}
               </div>
             </div>
           ))}
@@ -121,7 +142,7 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* RODAPÉ (INPUT DE TEXTO E BOTÕES) */}
+      {/* RODAPÉ */}
       <div className="border-t border-solid border-gray-100 bg-white p-5">
         <form onSubmit={handleSend} className="relative flex items-center">
           <input
@@ -131,26 +152,17 @@ export default function ChatPage() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Digite sua mensagem"
-            // Aumentei o pr-14 para pr-24 para caberem os dois botões
             className="h-14 w-full rounded-full border border-gray-200 bg-white pl-5 pr-24 text-sm outline-none focus:border-green-700 focus:ring-1 focus:ring-green-700"
             autoComplete="off"
             disabled={isLoading}
           />
-          
-          {/* Container para agrupar os botões na direita */}
           <div className="absolute right-2 flex items-center gap-1">
-            
-            {/* NOVO BOTÃO (Microfone / Futuro) */}
             <button
               type="button"
-              // preventDefault evita que o botão faça o formulário recarregar a tela por acidente
-              onClick={(e) => e.preventDefault()} 
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2E4A35] text-white transition-colors hover:bg-[#1f3324] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2E4A35] text-white transition-colors hover:bg-[#1f3324]"
             >
               <Mic size={20} />
             </button>
-
-            {/* BOTÃO DE ENVIAR TEXTO (Existente) */}
             <button
               type="submit"
               disabled={isLoading || !inputValue}
@@ -162,7 +174,6 @@ export default function ChatPage() {
                 <Send size={16} className="mr-0.5 mt-0.5" />
               )}
             </button>
-
           </div>
         </form>
       </div>
