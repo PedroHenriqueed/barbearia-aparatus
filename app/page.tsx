@@ -16,6 +16,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { Button } from "./_components/ui/button";
 import Link from "next/link";
+import { ChatButton } from "./_components/chat-button";
 import { Scissors, Eye, Activity, SoapDispenserDroplet } from "lucide-react"; // Importação dos ícones
 
 // Array com os atalhos usando componentes do Lucide
@@ -132,6 +133,8 @@ const Home = async () => {
         </PageSection>
       </PageContainer>
       <Footer />
+      {/* O botão flutuante do chat no cantinho */}
+      <ChatButton />
     </main>
   );
 };
