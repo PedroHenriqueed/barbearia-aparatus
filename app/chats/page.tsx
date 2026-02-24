@@ -4,6 +4,7 @@ import { ChevronLeft, Sparkles, Send, Loader2, Mic } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import Image from "next/image";
 
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
@@ -85,10 +86,9 @@ export default function ChatPage() {
         <Link href="/">
           <ChevronLeft size={24} className="text-gray-600 hover:text-black" />
         </Link>
-        <h1 className="flex-none grow-0 text-center font-['Merriweather'] text-[20px] leading-[140%] font-normal tracking-[-0.05em] text-black italic">
-          Aparatus
-        </h1>
-        <div className="w-[24px] flex-none"></div>
+       <Image src="/Logo.svg" alt="FSW Barber" height={18} width={90} className=" flex items-center"/>
+
+        <div className="w-[24px] flex items-center"></div>
       </header>
 
       {/* AVISO DE STATUS */}
