@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
+import Stripe from "stripe";
+
 
 type Message = { id: string; role: "user" | "assistant"; content: string };
 
