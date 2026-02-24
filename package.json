@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "prepare": "prisma generate"
+    "prepare": "prisma generate",
+    "postinstall": "prisma generate"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.30",
