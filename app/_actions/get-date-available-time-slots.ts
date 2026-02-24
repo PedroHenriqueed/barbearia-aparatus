@@ -4,10 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { endOfDay, startOfDay } from "date-fns";
 
 export const getDateAvailableTimeSlots = async ({
-  barbershopId, // CORRIGIDO: adicionado o "r"
+  babershopId, // CORRIGIDO: adicionado o "r"
   date,
 }: {
-  barbershopId: string; // CORRIGIDO
+  babershopId: string; // CORRIGIDO
   date: Date | string;
 }) => {
   const dateObj = new Date(date);
@@ -15,7 +15,7 @@ export const getDateAvailableTimeSlots = async ({
   // Busca todos os agendamentos para aquele dia e barbearia
   const bookings = await prisma.booking.findMany({
     where: {
-      barbershopId: barbershopId, // CORRIGIDO AQUI
+      babershopId: babershopId, // CORRIGIDO AQUI
       date: {
         gte: startOfDay(dateObj),
         lte: endOfDay(dateObj),
