@@ -10,7 +10,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/app/_components/ui/sheet";
-import { Barbershop, BarbershopService } from "@/app/generated/prisma/client";
+import { Barbershop, BarbershopService } from "@prisma/client";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useMemo } from "react";

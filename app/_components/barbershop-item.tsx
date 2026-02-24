@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Barbershop } from "../generated/prisma/client";
+import { Barbershop } from "@prisma/client";
 import Image from "next/image";
 
 interface BarbershopItemProps {

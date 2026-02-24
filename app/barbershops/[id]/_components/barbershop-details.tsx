@@ -13,7 +13,7 @@ import Image from "next/image";
 import Link from "next/link";
 import Footer from "@/app/_components/ui/footer";
 import ServiceItem from "./service-item";
-import { Barbershop, BarbershopService } from "@/app/generated/prisma/client";
+import { Barbershop, BarbershopService } from "@prisma/client";
 
 interface BarbershopDetailsProps {
   barbershop: Barbershop & {
