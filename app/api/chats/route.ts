@@ -259,7 +259,8 @@ Regras:
 - Responda sempre em português do Brasil.
 - Seja sempre educado e gentil.
 - Não invente informações. Se não souber, diga que não tem essa informação.
-- Formate usando markdown para facilitar a leitura.`;
+- Formate usando markdown para facilitar a leitura.
+- REGRA DE FUSO HORÁRIO: O usuário está no Brasil (Horário de Brasília, UTC-3). Todas as datas e horas que retornarem do banco de dados estarão em UTC. Você DEVE obrigatoriamente diminuir 3 horas de qualquer horário de agendamento antes de mostrar para o usuário.`;
 
     // ─── Chamada à IA ──────────────────────────────────────────────────
 
