@@ -74,7 +74,7 @@ export default async function BarbershopsPage({
             {quickSearchOptions.map((option) => (
               <Button
                 key={option.title}
-                variant="foreground"
+                variant="outline"
                 className="border-border border-2 gap-2 rounded-full font-bold"
                 asChild
               >
@@ -98,9 +98,7 @@ export default async function BarbershopsPage({
           </div>
 
           <div className="mt-6">
-            <PageSectionTitle>
-              Resultados para &quot;{search}&quot;
-            </PageSectionTitle>
+            <PageSectionTitle>{`Resultados para "${search}"`}</PageSectionTitle>
 
             <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {barbershops.map((barbershop) => (

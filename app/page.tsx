@@ -75,7 +75,7 @@ const Home = async () => {
           {quickSearchOptions.map((option) => (
             <Button
               key={option.title}
-              variant="foreground"
+              variant="outline"
               className="border-border border-2 gap-2 rounded-full font-bold"
               asChild
             >
