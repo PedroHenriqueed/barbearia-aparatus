@@ -189,9 +189,14 @@ export const POST = async (request: Request) => {
           `\n\n📋 AGENDAMENTOS DO USUÁRIO:\n` +
           userBookings
             .map((b) => {
-              const dateFormatted = format(b.date, "EEEE dd/MM 'às' HH:mm", {
+              // 👇 MÁGICA DO FUSO HORÁRIO AQUI:
+              // Subtrai 3 horas exatas (em milissegundos) da data do banco
+              const dataBrasilia = new Date(b.date.getTime() - 3 * 60 * 60 * 1000);
+
+              const dateFormatted = format(dataBrasilia, "EEEE dd/MM 'às' HH:mm", {
                 locale: ptBR,
               });
+              
               return `  • [ID: ${b.id}] ${b.service.name} em ${b.barbershop.name} — ${dateFormatted}`;
             })
             .join("\n");
@@ -199,7 +204,6 @@ export const POST = async (request: Request) => {
         userBookingsContext = `\n\n📋 AGENDAMENTOS DO USUÁRIO: Nenhum agendamento futuro encontrado.`;
       }
     }
-
     // ─── Contexto das barbearias ───────────────────────────────────────
 
     const barbershopsContext = barbershops
