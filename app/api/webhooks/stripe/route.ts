@@ -3,11 +3,11 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: "2025-10-29.clover",
-});
-
 export async function POST(request: Request) {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+    apiVersion: "2025-10-29.clover",
+  });
+
   const body = await request.text();
   const signature = (await headers()).get("Stripe-Signature") as string;
 
@@ -34,21 +34,16 @@ export async function POST(request: Request) {
 
     if (serviceId && barbershopId && userId && date) {
       try {
-        // 1. RECUPERA O PAYMENT INTENT NA API DO STRIPE
-        // session.payment_intent contém o ID do pagamento que acabou de ser feito
         const paymentIntent = await stripe.paymentIntents.retrieve(
           session.payment_intent as string,
         );
 
-        // 2. EXTRAI O CHARGE ID
-        // latest_charge retorna uma string com o ID da cobrança (ex: ch_3P9Z...)
         const stripeChargeId = paymentIntent.latest_charge as string;
 
-        // 3. SALVA A RESERVA COM O PAYMENT ID
         await prisma.booking.create({
           data: {
             date: new Date(date),
-            paymentId: stripeChargeId, // Salvando o Charge ID no banco
+            paymentId: stripeChargeId,
             user: {
               connect: { id: userId },
             },
@@ -61,10 +56,7 @@ export async function POST(request: Request) {
           },
         });
 
-        console.log(
-          "✅ Reserva criada com sucesso! Charge ID:",
-          stripeChargeId,
-        );
+        console.log("✅ Reserva criada com sucesso! Charge ID:", stripeChargeId);
       } catch (dbError: any) {
         console.error("❌ ERRO AO SALVAR RESERVA NO BANCO (Webhook):", dbError);
         return NextResponse.json(
