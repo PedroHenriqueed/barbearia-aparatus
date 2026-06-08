@@ -9,7 +9,6 @@ import { Button } from "../_components/ui/button";
 import Link from "next/link";
 import {
   Scissors,
-  Eye,
   Activity,
   SoapDispenserDroplet,
 } from "lucide-react";

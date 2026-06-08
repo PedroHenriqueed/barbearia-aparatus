@@ -16,7 +16,7 @@ export default function ChatPage() {
       id: "welcome-message",
       role: "assistant",
       content:
-        "Olá! Sou o Aparatus, seu assistente pessoal.\n\nEstou aqui para te auxiliar a agendar seu corte ou barba, encontrar as barbearias disponíveis perto de você e responder às suas dúvidas.",
+        "Olá! Sou o TrivoIA, seu assistente pessoal.\n\nEstou aqui para te auxiliar a agendar seu corte ou barba, encontrar as barbearias disponíveis perto de você e responder às suas dúvidas.",
     },
   ]);
   const [inputValue, setInputValue] = useState("");
@@ -86,9 +86,9 @@ export default function ChatPage() {
       {/* CABEÇALHO */}
       <header className="flex items-center justify-between border-b border-solid border-gray-100 p-5">
         <Link href="/">
-          <ChevronLeft size={24} className="text-gray-600 hover:text-black" />
+          <ChevronLeft size={24} className="text-blue-600 hover:text-black" />
         </Link>
-       <Image src="/Logo.svg" alt="FSW Barber" height={18} width={90} className=" flex items-center"/>
+       <Image src="/trivo_logo.png" alt="Trivo" height={18} width={110} className=" flex items-center"/>
 
         <div className="w-[24px] flex items-center"></div>
       </header>
@@ -109,7 +109,7 @@ export default function ChatPage() {
               className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {m.role !== "user" && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-green-700">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-blue-700">
                   <Sparkles size={16} />
                 </div>
               )}
@@ -161,14 +161,14 @@ export default function ChatPage() {
           <div className="absolute right-2 flex items-center gap-1">
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2E4A35] text-white transition-colors hover:bg-[#1f3324]"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1546A1] text-white transition-colors hover:bg-[#60A5FA]"
             >
               <Mic size={20} />
             </button>
             <button
               type="submit"
               disabled={isLoading || !inputValue}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2E4A35] text-white transition-colors hover:bg-[#1f3324] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1546A1] text-white transition-colors hover:bg-[#60A5FA] disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <Loader2 size={16} className="animate-spin" />

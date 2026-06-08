@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "sonner";
-import { Merriweather } from "next/font/google";
 import QueryProvider from "./_providers/query-providers";
+import BottomNav from "./_components/bottomNav";
+
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -16,30 +17,24 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Aparatus",
-  description: "Aparatus é uma plataforma de agendamento para barbearias",
+  title: "Trivo",
+  description: "Trivo é uma plataforma de agendamento para barbearias",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
-    // 1. Adicionado suppressHydrationWarning aqui
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        {/* 2. O <link> agora está DENTRO do <head> */}
-        <link
-          rel="stylesheet"
-          href="https://cdn-uicons.flaticon.com/2.5.1/uicons-regular-rounded/css/uicons-regular-rounded.css"
-          precedence="default"
-        />
-      </head>
-      <body className={`${jakarta.variable} ${geistMono.variable} antialiased`}>
+    <html lang="pt-BR">
+      <body className={`${jakarta.variable} ${geistMono.variable} font-sans antialiased`}>
         <QueryProvider>
-          {children}
-          <Toaster />
+          <main className="pb-16">
+            {children}
+          </main>
+          <BottomNav />
+          <Toaster richColors position="top-center" />
         </QueryProvider>
       </body>
     </html>
