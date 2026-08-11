@@ -9,21 +9,21 @@ import Link from "next/link"
 import { PageSectionTitle } from "../_components/ui/page"
 
 const services = [
-  { title: "Cabelo",      image: "/cabelo.png",      href: "/barbershops?search=Cabelo"      },
-  { title: "Barba",       image: "/barba.png",        href: "/barbershops?search=Barba"       },
-  { title: "Acabamento",  image: "/acabamento.png",   href: "/barbershops?search=Acabamento"  },
-  { title: "Sobrancelha", image: "/sobrancelha.png",  href: "/barbershops?search=Sobrancelha" },
-  { title: "Massagem",    image: "/massagem.png",     href: "/barbershops?search=Massagem"    },
-  { title: "Hidratação",  image: "/hidratacao.png",   href: "/barbershops?search=Hidratação"  },
+  { title: "Cabelo",      image: "/cabelo.jpg",      href: "/barbershops?search=Cabelo"      },
+  { title: "Barba",       image: "/barba.jpg",        href: "/barbershops?search=Barba"       },
+  { title: "Acabamento",  image: "/pezinho.jpg",   href: "/barbershops?search=Acabamento"  },
+  { title: "Sobrancelha", image: "/sobrancelha.jpg",  href: "/barbershops?search=Sobrancelha" },
+  { title: "Massagem",    image: "/massagem.jpg",     href: "/barbershops?search=Massagem"    },
+  { title: "Hidratação",  image: "/hidratacao.jpg",   href: "/barbershops?search=Hidratação"  },
 ]
 
 
 export default async function BuscaPage({
   searchParams,
 }: {
-  searchParams: { search?: string }
+  searchParams: Promise<{ search?: string }>
 }) {
-  const search = searchParams.search ?? ""
+  const search = (await searchParams).search ?? ""
 
   const barbershops: Barbershop[] = search
     ? await prisma.barbershop.findMany({
@@ -45,9 +45,9 @@ export default async function BuscaPage({
     : []
 
   return (
-    <div className="flex flex-col pb-24 min-h-screen bg-background">
+    <div className=" flex flex-col pb-24 min-h-screen bg-background">
       {/* ── Cabeçalho sticky com busca ── */}
-      <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-5 pt-5 pb-4 shadow-sm">
+      <div className="relative  top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-5 pt-5 pb-4 shadow-sm">
         <SearchInput defaultSearch={search} />
       </div>
 

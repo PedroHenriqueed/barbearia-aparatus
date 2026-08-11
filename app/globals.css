@@ -3,73 +3,11 @@
 @source "../node_modules/streamdown/dist/index.js";
 @source "../node_modules/streamdown/dist/*.js";
 
-
-@custom-variant dark (&:is(.dark *));
-
 :root {
-  --background: oklch(0.994 0 0);
-  --foreground: oklch(0.2178 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2178 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2178 0 0);
-  --primary: #1546A1;
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.9067 0 0);
-  --secondary-foreground: oklch(0.2178 0 0);
-  --muted: oklch(0.9551 0 0);
-  --muted-foreground: oklch(0.5555 0 0);
-  --accent: #dbe7f7;
-  --accent-foreground: oklch(0.2178 0 0);
-  --destructive: oklch(0.53 0.1547 24.056);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.8699 0 0);
-  --input: oklch(1 0 0);
-  --ring: #1546A1;
-  --chart-1: #2069ED;
-  --chart-2: #3B82F6;
-  --chart-3: #60A5FA;
-  --chart-4: #93C5FD;
-  --chart-5: #BFDBFE;
-  --sidebar: oklch(0.9791 0 0);
-  --sidebar-foreground: oklch(0.2178 0 0);
-  --sidebar-primary: #1546A1;
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.9454 0.015 151.7659);
-  --sidebar-accent-foreground: oklch(0.2178 0 0);
-  --sidebar-border: oklch(0.9067 0 0);
-  --sidebar-ring: #1546A1;
-  --font-sans: Inter, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: JetBrains Mono, monospace;
-  --radius: 0.5rem;
-  --shadow-x: 0;
-  --shadow-y: 0.125rem;
-  --shadow-blur: 0.25rem;
-  --shadow-spread: 0;
-  --shadow-opacity: 0.1;
-  --shadow-color: 0 0 0;
-  --shadow-2xs: 0 0.125rem 0.25rem 0 hsl(0 0 0 / 0.05);
-  --shadow-xs: 0 0.125rem 0.25rem 0 hsl(0 0 0 / 0.05);
-  --shadow-sm:
-    0 0.125rem 0.25rem 0 hsl(0 0 0 / 0.1), 0 1px 2px -1px hsl(0 0 0 / 0.1);
-  --shadow:
-    0 0.125rem 0.25rem 0 hsl(0 0 0 / 0.1), 0 1px 2px -1px hsl(0 0 0 / 0.1);
-  --shadow-md:
-    0 0.125rem 0.25rem 0 hsl(0 0 0 / 0.1), 0 2px 4px -1px hsl(0 0 0 / 0.1);
-  --shadow-lg:
-    0 0.125rem 0.25rem 0 hsl(0 0 0 / 0.1), 0 4px 6px -1px hsl(0 0 0 / 0.1);
-  --shadow-xl:
-    0 0.125rem 0.25rem 0 hsl(0 0 0 / 0.1), 0 8px 10px -1px hsl(0 0 0 / 0.1);
-  --shadow-2xl: 0 0.125rem 0.25rem 0 hsl(0 0 0 / 0.25);
-  --tracking-normal: 0;
-  --spacing: 0.25rem;
-}
-
-.dark {
-  --background: oklch(0.2178 0 0);
+  /* CORES DO MODO DARK (agora como padrão) */
+  --background: oklch(0% 0 0);
   --foreground: oklch(0.994 0 0);
-  --card: oklch(0.2686 0 0);
+  --card: oklch(21.779% 0.00002 271.152);
   --card-foreground: oklch(0.994 0 0);
   --popover: oklch(0.2686 0 0);
   --popover-foreground: oklch(0.994 0 0);
@@ -99,10 +37,16 @@
   --sidebar-accent-foreground: oklch(0.994 0 0);
   --sidebar-border: oklch(0.3485 0 0);
   --sidebar-ring: #1546A1;
+
+  /* FONTES E ESPAÇAMENTOS (mantidos) */
   --font-sans: Inter, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: JetBrains Mono, monospace;
   --radius: 0.5rem;
+  --tracking-normal: 0;
+  --spacing: 0.25rem;
+
+  /* SOMBRAS DO MODO DARK */
   --shadow-x: 0;
   --shadow-y: 0.25rem;
   --shadow-blur: 0.5rem;
@@ -111,16 +55,11 @@
   --shadow-color: 0 0 0;
   --shadow-2xs: 0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.2);
   --shadow-xs: 0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.2);
-  --shadow-sm:
-    0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 1px 2px -1px hsl(0 0 0 / 0.4);
-  --shadow:
-    0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 1px 2px -1px hsl(0 0 0 / 0.4);
-  --shadow-md:
-    0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 2px 4px -1px hsl(0 0 0 / 0.4);
-  --shadow-lg:
-    0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 4px 6px -1px hsl(0 0 0 / 0.4);
-  --shadow-xl:
-    0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 8px 10px -1px hsl(0 0 0 / 0.4);
+  --shadow-sm: 0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 1px 2px -1px hsl(0 0 0 / 0.4);
+  --shadow: 0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 1px 2px -1px hsl(0 0 0 / 0.4);
+  --shadow-md: 0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 2px 4px -1px hsl(0 0 0 / 0.4);
+  --shadow-lg: 0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 4px 6px -1px hsl(0 0 0 / 0.4);
+  --shadow-xl: 0 0.25rem 0.5rem 0 hsl(0 0 0 / 0.4), 0 8px 10px -1px hsl(0 0 0 / 0.4);
   --shadow-2xl: 0 0.25rem 0.5rem 0 hsl(0 0 0 / 1);
 }
 

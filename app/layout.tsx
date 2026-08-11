@@ -4,6 +4,7 @@ import "./globals.css";
 import { Toaster } from "sonner";
 import QueryProvider from "./_providers/query-providers";
 import BottomNav from "./_components/bottomNav";
+import BottomNavWrapper from "./_components/bottowNavWrapper";
 
 
 const jakarta = Plus_Jakarta_Sans({
@@ -27,13 +28,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="dark">
       <body className={`${jakarta.variable} ${geistMono.variable} font-sans antialiased`}>
         <QueryProvider>
           <main className="pb-16">
             {children}
           </main>
-          <BottomNav />
+          <BottomNavWrapper />
           <Toaster richColors position="top-center" />
         </QueryProvider>
       </body>

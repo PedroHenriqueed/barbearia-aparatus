@@ -24,7 +24,7 @@ export const createBookingCheckoutSession = actionClient
       headers: await headers(),
     });
 
-    if (!session) {
+    if (!session?.user) {
       return returnValidationErrors(inputSchema, {
         _errors: ["Unauthorized"],
       });
@@ -45,6 +45,20 @@ export const createBookingCheckoutSession = actionClient
       });
     }
 
+    // Valida se o horário já não foi reservado por outro cliente
+    const existingBooking = await prisma.booking.findFirst({
+      where: {
+        babershopId: service.babershopId,
+        date: date,
+      },
+    });
+
+    if (existingBooking) {
+      return returnValidationErrors(inputSchema, {
+        _errors: ["Booking already exists"],
+      });
+    }
+
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
       apiVersion: "2025-10-29.clover",
     });
@@ -57,10 +71,9 @@ export const createBookingCheckoutSession = actionClient
       metadata: {
         date: date.toISOString(),
         serviceId: service.id,
-        // Isso garante que ele pegue o ID, independente de como o TypeScript nomeou a coluna no service
-        barbershopId:
-          (service as any).barbershopId || (service as any).babershopId,
+        barbershopId: service.babershopId,
         userId: session.user.id,
+        paymentMethod: "ONLINE",
       },
       line_items: [
         {

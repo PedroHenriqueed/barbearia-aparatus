@@ -74,6 +74,7 @@ export const POST = async (request: Request) => {
     const userId = session?.user?.id ?? null;
 
     const barbershops = await prisma.barbershop.findMany({
+        take:5,
       select: {
         id: true,
         name: true,
@@ -127,7 +128,7 @@ export const POST = async (request: Request) => {
     let availabilityContext = "";
 
     if (isAskingAvailability) {
-      const days = Array.from({ length: 7 }, (_, i) => {
+      const days = Array.from({ length: 2 }, (_, i) => {
         const d = new Date();
         d.setDate(d.getDate() + i);
         return format(d, "yyyy-MM-dd");
@@ -218,7 +219,7 @@ export const POST = async (request: Request) => {
         return `📍 *${b.name}* [ID: ${b.id}]
   Endereço: ${b.address}
   Telefones: ${b.phones.join(", ")}
-  Descrição: ${b.description}
+  Descrição: ${b.description?.slice(0,80)?? ""}
   Serviços:
 ${servicesList || "    Nenhum serviço cadastrado"}`;
       })
@@ -269,15 +270,15 @@ Regras:
     // ─── Chamada à IA ──────────────────────────────────────────────────
 
     const aiResponse = await groq.chat.completions.create({
-      model: "meta-llama/llama-4-scout-17b-16e-instruct",
+     model: "llama-3.1-8b-instant",
       messages: [
         { role: "system", content: systemPrompt },
-        ...body.messages.slice(-10).map((m: any) => ({
+        ...body.messages.slice(-4).map((m: any) => ({
           role: m.role as "user" | "assistant",
           content: m.content || "",
         })),
       ],
-      max_tokens: 1024,
+      max_tokens: 512,
       stream: false,
     });
 

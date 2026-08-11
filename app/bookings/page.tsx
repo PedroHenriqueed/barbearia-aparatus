@@ -1,66 +1,99 @@
-import Header from "../_components/header";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import BookingItem from "../_components/booking-item";
-import { PageContainer, PageSectionTitle } from "../_components/ui/page";
-import Footer from "../_components/ui/footer";
+import { PageContainer } from "../_components/ui/page";
+import { CalendarX2 } from 'lucide-react';
+import { Button } from "../_components/ui/button";
+
 
 const BookingsPage = async () => {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  // Se o usuário não estiver logado, manda pro início
   if (!session?.user) {
     return redirect("/");
   }
 
-  // 1. Calcula a data/hora limite (Agora menos 2 horas)
   const cutoffTime = new Date();
   cutoffTime.setHours(cutoffTime.getHours() - 2);
 
-  // 2. Busca APENAS agendamentos maiores que o horário limite
-  const bookings = await prisma.booking.findMany({
+  // Busca Confirmados
+  const confirmedBookings = await prisma.booking.findMany({
     where: {
       userId: session.user.id,
-      date: {
-        gte: cutoffTime,
-      },
+      date: { gte: cutoffTime },
     },
-    include: {
-      service: true,
-      barbershop: true,
+    include: { service: true, barbershop: true },
+    orderBy: { date: "asc" },
+  });
+
+  // Busca Histórico (Finalizados)
+  const finishedBookings = await prisma.booking.findMany({
+    where: {
+      userId: session.user.id,
+      date: { lt: cutoffTime },
     },
-    orderBy: {
-      date: "asc",
-    },
+    include: { service: true, barbershop: true },
+    orderBy: { date: "desc" },
   });
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col pb-20">
+      <PageContainer>
+        <h1 className="mt-5 mb-6 text-xl font-bold">Agendamentos</h1>
 
-      <div className="flex-1">
-        <PageContainer>
-          <h1 className="mb-6 text-xl font-bold">Agendamentos</h1>
+        {/* SEÇÃO 1: CONFIRMADOS / ATIVOS */}
+        {confirmedBookings.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-gray-400 uppercase text-xs font-bold mb-3">
+              Confirmados
+            </h2>
+            <div className="flex flex-col gap-3">
+              {confirmedBookings.map((booking) => (
+                <BookingItem key={booking.id} booking={booking} />
+              ))}
+            </div>
+          </div>
+        )}
 
-          {bookings.length > 0 ? (
-            <>
-              {/* Ocultamos o título "Confirmados" ou "Finalizados" para ficar mais clean,
-                  já que agora só vai ter uma lista na tela */}
-              <div className="mt-3 flex flex-col gap-3">
-                {bookings.map((booking) => (
-                  <BookingItem key={booking.id} booking={booking} />
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="text-gray-400">Você não possui agendamentos.</p>
-          )}
-        </PageContainer>
-      </div>
-      <Footer />
+        {/* SEÇÃO 2: HISTÓRICO / FINALIZADOS */}
+        {finishedBookings.length > 0 && (
+          <div>
+            <h2 className="text-gray-400 uppercase text-xs font-bold mb-3">
+              Finalizados
+            </h2>
+            <div className="flex flex-col gap-4">
+              {finishedBookings.map((booking) => (
+                <div
+                  key={booking.id}
+                  className="flex flex-col gap-2"
+                >
+                  {/* Card do agendamento antigo */}
+                  <BookingItem booking={booking} />
+
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ESTADO VAZIO (Caso não tenha nada nem em confirmados nem em histórico) */}
+        {confirmedBookings.length === 0 && finishedBookings.length === 0 && (
+          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-3">
+            <CalendarX2 size={72} className="text-gray-400"/>
+            <p className="text-gray-400 text-sm font-medium mb-4">
+              Você não possui agendamentos!
+            </p>
+            <Button asChild className="bg-blue-600 text-white rounded-full">
+              <Link href="/busca">Buscar Barbearias</Link>
+            </Button>
+          </div>
+        )}
+      </PageContainer>
     </div>
   );
 };

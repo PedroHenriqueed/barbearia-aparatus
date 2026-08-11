@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import Image from "next/image";
-import Stripe from "stripe";
+
 
 
 type Message = { id: string; role: "user" | "assistant"; content: string };
@@ -82,7 +82,7 @@ export default function ChatPage() {
   };
 
   return (
-    <div className="flex h-screen flex-col bg-white">
+    <div className="fixed inset-0 z-50 flex h-dvh flex-col overflow-hidden bg-white">
       {/* CABEÇALHO */}
       <header className="flex items-center justify-between border-b border-solid border-gray-100 p-5">
         <Link href="/">
@@ -90,7 +90,7 @@ export default function ChatPage() {
         </Link>
        <Image src="/trivo_logo.png" alt="Trivo" height={18} width={110} className=" flex items-center"/>
 
-        <div className="w-[24px] flex items-center"></div>
+        <div className="w-6 flex items-center"></div>
       </header>
 
       {/* AVISO DE STATUS */}
@@ -154,7 +154,7 @@ export default function ChatPage() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Digite sua mensagem"
-            className="h-14 w-full rounded-full border border-gray-200 bg-white pl-5 pr-24 text-sm outline-none focus:border-green-700 focus:ring-1 focus:ring-green-700"
+            className="h-14 w-full rounded-full border text-black border-gray-200 bg-white pl-5 pr-24 text-sm outline-none"
             autoComplete="off"
             disabled={isLoading}
           />

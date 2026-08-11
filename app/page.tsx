@@ -1,10 +1,7 @@
 import Header from "./_components/header";
-import banner from "../public/banner_desconto.png";
-import banner2 from "../public/banner_chat.png";
-import banner3 from "../public/banner_melhor.png";
-import { BannerCarousel } from "./_components/ui/banner-carousel";
 import BookingItem from "./_components/booking-item";
 import { prisma } from "@/lib/prisma";
+import SearchInput from "@/app/_components/search-input";
 import BarbershopItem from "./_components/barbershop-item";
 import {
   PageContainer,
@@ -13,23 +10,44 @@ import {
   PageScrollContainer,
 } from "./_components/ui/page";
 import { auth } from "@/lib/auth";
-import { QuickSearchButtons } from "./_components/ui/quick-search-buttons";
 import { headers } from "next/headers";
 import { ChatButton } from "./_components/chat-button";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 
-const banners = [banner, banner2, banner3];
+// Tipagem para receber parâmetros da URL (Next.js 15+ App Router)
+interface HomeProps {
+  searchParams: Promise<{ search?: string }>;
+}
 
-const Home = async () => {
+const Home = async (props: HomeProps) => {
+  // Pega a sessão usando a sua autenticação atual
   const session = await auth.api.getSession({
     headers: await headers(),
   });
+
+  // Extrai apenas o primeiro nome do usuário (se estiver logado)
+  const firstName = session?.user?.name?.split(" ")[0];
+
+  // Captura o parâmetro de busca (search) da URL, se existir
+  const searchParams = await props.searchParams;
+  const search = searchParams?.search || "";
 
   const recommendedBarbershops = await prisma.barbershop.findMany({
     orderBy: {
       name: "asc",
     },
   });
+
+  const favoriteBarbershops = session?.user
+    ? await prisma.barbershop.findMany({
+      where: {
+        favorites: { some: { userId: session.user.id } },
+      },
+    })
+    : [];
+
   const popularBarbershops = await prisma.barbershop.findMany({
     orderBy: {
       name: "desc",
@@ -56,18 +74,34 @@ const Home = async () => {
     : null;
 
   return (
-    <main>
+    <main className="flex flex-col pb-24 min-h-screen bg-background">
       <Header />
 
+      {/* --- SEÇÃO DE SAUDAÇÃO --- */}
+      <div className="px-5 pt-5">
+        <h2 className="text-3xl tracking-tight text-white">
+          {session?.user ? (
+            <>
+              <span className="font-normal">Olá, </span>
+              <span className="font-bold">{firstName}</span>
+            </>
+          ) : (
+            <span className="font-bold">Olá!</span>
+          )}
+        </h2>
+        <p className="text-sm font-medium text-gray-300 mt-1 capitalize">
+          {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
+        </p>
+      </div>
+
+      {/* ── CABEÇALHO STICKY COM BUSCA ── */}
+      <div className=" px-5 pt-5 pb-4 ">
+        <SearchInput defaultSearch={search} />
+      </div>
+
+      {/* Restante do conteúdo da página */}
       <PageContainer>
         <ChatButton />
-
-        {/* BOTÕES DE BUSCA RÁPIDA */}
-        <QuickSearchButtons />
-
-        <div className="mt-6">
-          <BannerCarousel banners={banners} />
-        </div>
 
         {confirmedBooking && (
           <PageSection>
@@ -75,6 +109,14 @@ const Home = async () => {
             <BookingItem booking={confirmedBooking} />
           </PageSection>
         )}
+        <PageSection>
+          <PageSectionTitle>Favoritos</PageSectionTitle>
+          <PageScrollContainer>
+            {favoriteBarbershops.map((barbershop) => (
+              <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+            ))}
+          </PageScrollContainer>
+        </PageSection>
 
         <PageSection>
           <PageSectionTitle>Recomendados</PageSectionTitle>
@@ -93,9 +135,11 @@ const Home = async () => {
             ))}
           </PageScrollContainer>
         </PageSection>
-      </PageContainer>
 
+
+      </PageContainer>
     </main>
   );
 };
+
 export default Home;

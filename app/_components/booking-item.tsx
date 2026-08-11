@@ -17,7 +17,7 @@ import {
 } from "./ui/sheet";
 import Image from "next/image";
 import { Button } from "./ui/button";
-import { Smartphone } from "lucide-react";
+import { CreditCard, Wallet, Smartphone } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { cancelBooking } from "../_actions/cancel-booking";
 import { toast } from "sonner";
@@ -55,9 +55,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
     },
   });
 
-  // Lógica: Confirmado SE (futuro E não cancelado).
-  // Qualquer outro caso (passado OU cancelado) é tratado como "Finalizado" visualmente.
   const isBookingConfirmed = isFuture(booking.date) && !booking.cancelled;
+  const isPaid = booking.paymentStatus === "PAID";
+  const isOnlinePayment = booking.paymentMethod === "ONLINE";
 
   const handleCancelBooking = async () => {
     await executeAsync({ bookingId: booking.id });
@@ -73,19 +73,45 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <SheetTrigger asChild>
-        <Card className="bg-card hover:bg-secondary/10 min-w-full cursor-pointer rounded-xl border shadow-sm transition-colors">
+        {/* CARD PRINCIPAL */}
+        <Card
+          className={`min-w-full cursor-pointer rounded-xl border shadow-sm transition-all ${isBookingConfirmed
+              ? "!bg-black border-zinc-400 hover:!bg-zinc-900 active:!bg-zinc-900"
+              : "!bg-zinc-950/80 !border-zinc-500 opacity-60 hover:opacity-80"
+            }`}
+        >
           <CardContent className="flex justify-between p-0">
             {/* ESQUERDA */}
             <div className="flex flex-col gap-3 py-5 pl-5">
-              <Badge
-                className={`w-fit rounded-full px-3 py-1 text-xs font-bold shadow-none ${
-                  isBookingConfirmed
-                    ? "bg-primary/10 text-primary hover:bg-primary/10"
-                    : "bg-secondary text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                {isBookingConfirmed ? "CONFIRMADO" : "FINALIZADO"}
-              </Badge>
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge
+                  className={`w-fit rounded-full px-3 py-1 text-xs font-bold shadow-none ${isBookingConfirmed
+                      ? "!bg-zinc-800 !text-white hover:!bg-zinc-800"
+                      : "!bg-zinc-800 !text-zinc-400 hover:!bg-zinc-800"
+                    }`}
+                >
+                  {isBookingConfirmed ? "CONFIRMADO" : "FINALIZADO"}
+                </Badge>
+
+                {/* BADGE DE PAGAMENTO NO CARD */}
+                <Badge
+                  className={`flex w-fit items-center gap-1 rounded-full px-3 py-1 text-xs font-bold shadow-none ${isPaid
+                      ? "!bg-emerald-950 !text-emerald-400 hover:!bg-emerald-950"
+                      : "!bg-amber-950 !text-amber-400 hover:!bg-amber-950"
+                    }`}
+                >
+                  {isOnlinePayment ? (
+                    <CreditCard size={12} />
+                  ) : (
+                    <Wallet size={12} />
+                  )}
+                  {isPaid ? "PAGO ONLINE"
+                    : isOnlinePayment
+                      ? "AGUARDANDO PAGAMENTO"
+                      : "PAGAR NO LOCAL"}
+                </Badge>
+              </div>
+
               <div className="mt-1">
                 <h3 className="text-foreground text-base font-bold">
                   {booking.service.name}
@@ -150,7 +176,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                   <h3 className="text-foreground truncate font-bold">
                     {booking.barbershop.name}
                   </h3>
-                  <p className="text-muted-foreground truncate overflow-hidden text-xs text-nowrap text-ellipsis">
+                  <p className="text-muted-foreground truncate overflow-hidden text-nowrap text-xs text-ellipsis">
                     {booking.barbershop.address}
                   </p>
                 </div>
@@ -158,16 +184,29 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </div>
           </Card>
 
-          {/* Badge de Status */}
-          <div className="mt-6 mb-6">
+          {/* Badges de Status no Modal */}
+          <div className="mt-6 mb-6 flex flex-wrap gap-2">
             <Badge
-              className={`w-fit rounded-full px-3 py-1 text-xs font-bold shadow-none ${
-                isBookingConfirmed
-                  ? "bg-primary/10 text-primary hover:bg-primary/10"
-                  : "bg-secondary text-muted-foreground hover:bg-secondary"
-              }`}
+              className={`w-fit rounded-full px-3 py-1 text-xs font-bold shadow-none ${isBookingConfirmed
+                  ? "!bg-zinc-800 !text-white hover:!bg-zinc-800"
+                  : "!bg-zinc-800 !text-zinc-400 hover:!bg-zinc-800"
+                }`}
             >
               {isBookingConfirmed ? "CONFIRMADO" : "FINALIZADO"}
+            </Badge>
+
+            <Badge
+              className={`flex w-fit items-center gap-1 rounded-full px-3 py-1 text-xs font-bold shadow-none ${isPaid
+                  ? "!bg-emerald-950 !text-emerald-400 hover:!bg-emerald-950"
+                  : "!bg-amber-950 !text-amber-400 hover:!bg-amber-950"
+                }`}
+            >
+              {isOnlinePayment ? (
+                <CreditCard size={12} />
+              ) : (
+                <Wallet size={12} />
+              )}
+              {isPaid ? "PAGO ONLINE" : "PAGAMENTO PENDENTE (NO LOCAL)"}
             </Badge>
           </div>
 
@@ -206,6 +245,26 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                   {booking.barbershop.name}
                 </span>
               </div>
+
+              {/* Informações adicionais de Pagamento */}
+              <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
+                <span className="text-muted-foreground text-sm">Método</span>
+                <span className="text-foreground text-sm font-medium">
+                  {isOnlinePayment ? "Cartão (Online)" : "Na Barbearia"}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground text-sm">
+                  Status Pagamento
+                </span>
+                <span
+                  className={`text-sm font-bold ${isPaid ? "text-emerald-400" : "text-amber-400"
+                    }`}
+                >
+                  {isPaid ? "Pago" : "Pendente"}
+                </span>
+              </div>
             </CardContent>
           </Card>
 
@@ -240,33 +299,35 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </Button>
           </SheetClose>
 
-          {/* Botão de cancelar (agora com AlertDialog) */}
+          {/* Botão de cancelar */}
           {isBookingConfirmed && (
             <AlertDialog>
               <AlertDialogTrigger asChild>
                 <Button
-                  variant="destructive"
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-12 flex-1 rounded-xl text-base font-bold"
+                  className="bg-red-500 text-white hover:bg-red-500/90 h-12 flex-1 rounded-xl text-base font-bold"
                   disabled={isPending}
                 >
                   Cancelar Reserva
                 </Button>
               </AlertDialogTrigger>
-              <AlertDialogContent className="border-borde w-[90%] rounded-xl">
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Essa ação não pode ser desfeita. Isso cancelará
-                    permanentemente sua reserva.
+              <AlertDialogContent className="border-border w-[90%] max-w-[400px] rounded-xl text-center">
+                <AlertDialogHeader className="items-center text-center">
+                  <AlertDialogTitle className="text-center">
+                    Você tem certeza?
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-center">
+                    Essa ação não pode ser desfeita. Isso cancelará permanentemente
+                    sua reserva.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
-                <AlertDialogFooter className="flex-row gap-3">
-                  <AlertDialogCancel className="mt-0 h-10 w-40">
+
+                <AlertDialogFooter className="flex-row justify-center gap-3">
+                  <AlertDialogCancel className="mt-0 h-10 flex-1 rounded-xl">
                     Voltar
                   </AlertDialogCancel>
                   <AlertDialogAction
                     disabled={isPending}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90 h-10 w-40"
+                    className="text-white bg-red-500 hover:bg-red-500/90 h-10 flex-1 rounded-xl"
                     onClick={handleCancelBooking}
                   >
                     {isPending ? "Cancelando..." : "Confirmar"}

@@ -43,7 +43,7 @@ export default function BottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
+    <nav className="bg-black fixed bottom-0 left-0 right-0 z-50 border-t border-gray-100 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
       <ul className="flex justify-around items-center h-16 max-w-lg mx-auto px-2">
 
         {/* Links normais */}
@@ -54,7 +54,7 @@ export default function BottomNav() {
               <Link
                 href={href}
                 className={`flex flex-col items-center justify-center gap-1 py-2 rounded-xl transition-all ${
-                  isActive ? 'text-black' : 'text-gray-400 hover:text-gray-500'
+                  isActive ? 'text-white' : 'text-gray-100 hover:text-gray-500'
                 }`}
               >
                 <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
@@ -70,7 +70,7 @@ export default function BottomNav() {
         <li className="flex-1">
           <Sheet>
             <SheetTrigger asChild>
-              <button className="flex flex-col items-center justify-center gap-1 py-2 w-full rounded-xl text-gray-400 hover:text-gray-500 transition-all">
+              <button className="flex flex-col items-center justify-center gap-1 py-2 w-full rounded-xl text-gray-100 hover:text-gray-500 transition-all">
                 <div className="relative">
                   {session?.user ? (
                     <Avatar className="w-6 h-6">

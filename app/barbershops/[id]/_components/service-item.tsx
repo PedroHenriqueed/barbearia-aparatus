@@ -12,17 +12,18 @@ import {
 } from "@/app/_components/ui/sheet";
 import { Barbershop, BarbershopService } from "@prisma/client";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, CreditCard, Wallet } from "lucide-react";
 import { useState, useMemo } from "react";
 import { useAction } from "next-safe-action/hooks";
-import { createBookingCheckoutSession } from "@/app/_actions/create-booking-checkout-session"; // Nova Action
+import { createBookingCheckoutSession } from "@/app/_actions/create-booking-checkout-session";
 import { toast } from "sonner";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getDateAvailableTimeSlots } from "@/app/_actions/get-date-available-time-slots";
+import { createInPersonBooking } from "@/app/_actions/create-booking";
 import { format, set } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation"; // Importar useRouter
+import { useRouter } from "next/navigation";
 
 interface ServiceItemProps {
   service: BarbershopService;
@@ -33,7 +34,6 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
 
-  // 👉 ESSA É A LINHA QUE ESTÁ FALTANDO:
   const { data: session } = authClient.useSession();
 
   const [sheetIsOpen, setSheetIsOpen] = useState(false);
@@ -42,6 +42,11 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   );
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [currentMonth, setCurrentMonth] = useState(new Date());
+
+  // Estado da forma de pagamento escolhida
+  const [paymentMethod, setPaymentMethod] = useState<"IN_PERSON" | "ONLINE">(
+    "IN_PERSON",
+  );
 
   // Busca horários disponíveis no servidor
   const { data: availableTimesSlots, isFetching } = useQuery({
@@ -54,21 +59,41 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     enabled: !!date,
   });
 
-  // Hook para a action de checkout
-  const { executeAsync, isPending } = useAction(createBookingCheckoutSession, {
-    onSuccess: ({ data }) => {
-      if (data?.url) {
-        router.push(data.url); // Redireciona para o Stripe
-      } else {
-        toast.error("Erro ao criar sessão de pagamento.");
-      }
+  // Action 1: Pagamento Online (Stripe)
+  const { executeAsync: executeOnlineBooking, isPending: isOnlinePending } =
+    useAction(createBookingCheckoutSession, {
+      onSuccess: ({ data }) => {
+        if (data?.url) {
+          router.push(data.url);
+        } else {
+          toast.error("Erro ao criar sessão de pagamento.");
+        }
+      },
+      onError: ({ error }) => {
+        toast.error(error.serverError || "Erro ao iniciar pagamento.");
+      },
+    });
+
+  // Action 2: Pagamento na Barbearia (Prisma direto)
+  const {
+    executeAsync: executeInPersonBooking,
+    isPending: isInPersonPending,
+  } = useAction(createInPersonBooking, {
+    onSuccess: () => {
+      toast.success("Agendamento realizado com sucesso!");
+      queryClient.invalidateQueries({
+        queryKey: ["date-available-time-slots", service.babershopId, date],
+      });
+      setSheetIsOpen(false);
+      setSelectedTime(undefined);
+      router.push("/bookings");
     },
     onError: ({ error }) => {
-      toast.error(error.serverError || "Erro ao iniciar pagamento.");
+      toast.error(error.serverError || "Erro ao realizar agendamento.");
     },
   });
 
-  // Lista dinâmica vinda do servidor
+  const isPending = isOnlinePending || isInPersonPending;
   const timeList: string[] = availableTimesSlots || [];
 
   const calendarDays = useMemo(() => {
@@ -135,11 +160,18 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
       minutes: minute,
     });
 
-    // Chama APENAS o Stripe. O Webhook fará o resto!
-    await executeAsync({
-      serviceId: service.id,
-      date: bookingDate,
-    });
+    if (paymentMethod === "ONLINE") {
+      await executeOnlineBooking({
+        serviceId: service.id,
+        date: bookingDate,
+      });
+    } else {
+      await executeInPersonBooking({
+        serviceId: service.id,
+        barbershopId: service.babershopId,
+        date: bookingDate,
+      });
+    }
   };
 
   const capitalizedMonth = format(currentMonth, "MMMM", {
@@ -192,12 +224,13 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
               setSheetIsOpen(open);
               if (!open) {
                 setSelectedTime(undefined);
+                setPaymentMethod("IN_PERSON");
               }
             }}
           >
             <SheetTrigger asChild>
               <Button
-                variant="secondary"
+                color="#1546A1"
                 className="rounded-full px-4 text-xs font-bold"
                 size="sm"
               >
@@ -322,6 +355,43 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                   </div>
                 )}
 
+                {/* Seleção da Forma de Pagamento */}
+                {selectedTime && date && (
+                  <div className="mb-6 flex flex-col gap-3">
+                    <h3 className="text-foreground text-base font-bold">
+                      Forma de Pagamento
+                    </h3>
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("IN_PERSON")}
+                        className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all ${
+                          paymentMethod === "IN_PERSON"
+                            ? "border-primary bg-primary/10 text-primary font-bold"
+                            : "border-border text-muted-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        <Wallet className="h-5 w-5" />
+                        <span className="text-xs">Pagar na Barbearia</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setPaymentMethod("ONLINE")}
+                        className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all ${
+                          paymentMethod === "ONLINE"
+                            ? "border-primary bg-primary/10 text-primary font-bold"
+                            : "border-border text-muted-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        <CreditCard className="h-5 w-5" />
+                        <span className="text-xs">Pagar Agora Online</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
                 {/* Resumo do Pedido */}
                 {selectedTime && date && (
                   <Card className="border-border rounded-xl border p-4 shadow-sm">
@@ -364,6 +434,17 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                           {barbershop.name}
                         </span>
                       </div>
+
+                      <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
+                        <span className="text-muted-foreground text-sm">
+                          Pagamento
+                        </span>
+                        <span className="text-foreground text-sm font-semibold">
+                          {paymentMethod === "ONLINE"
+                            ? "Cartão (Online)"
+                            : "Na Barbearia"}
+                        </span>
+                      </div>
                     </CardContent>
                   </Card>
                 )}
@@ -375,7 +456,11 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                   disabled={!selectedTime || !date || isPending}
                   onClick={handleBookingSubmit}
                 >
-                  {isPending ? "Redirecionando para pagamento..." : "Confirmar"}
+                  {isPending
+                    ? "Processando..."
+                    : paymentMethod === "ONLINE"
+                      ? "Pagar e Confirmar"
+                      : "Confirmar Agendamento"}
                 </Button>
               </SheetFooter>
             </SheetContent>
