@@ -75,23 +75,21 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     });
 
   // Action 2: Pagamento na Barbearia (Prisma direto)
-  const {
-    executeAsync: executeInPersonBooking,
-    isPending: isInPersonPending,
-  } = useAction(createInPersonBooking, {
-    onSuccess: () => {
-      toast.success("Agendamento realizado com sucesso!");
-      queryClient.invalidateQueries({
-        queryKey: ["date-available-time-slots", service.babershopId, date],
-      });
-      setSheetIsOpen(false);
-      setSelectedTime(undefined);
-      router.push("/bookings");
-    },
-    onError: ({ error }) => {
-      toast.error(error.serverError || "Erro ao realizar agendamento.");
-    },
-  });
+  const { executeAsync: executeInPersonBooking, isPending: isInPersonPending } =
+    useAction(createInPersonBooking, {
+      onSuccess: () => {
+        toast.success("Agendamento realizado com sucesso!");
+        queryClient.invalidateQueries({
+          queryKey: ["date-available-time-slots", service.babershopId, date],
+        });
+        setSheetIsOpen(false);
+        setSelectedTime(undefined);
+        router.push("/bookings");
+      },
+      onError: ({ error }) => {
+        toast.error(error.serverError || "Erro ao realizar agendamento.");
+      },
+    });
 
   const isPending = isOnlinePending || isInPersonPending;
   const timeList: string[] = availableTimesSlots || [];
@@ -192,7 +190,8 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
 
   return (
     <Card className="border-border flex w-full flex-row items-center gap-3 overflow-hidden rounded-xl border p-3 shadow-sm">
-      <div className="relative h-[110px] min-h-[110px] w-[110px] min-w-[110px] overflow-hidden rounded-lg">
+      {/* Imagem do Serviço */}
+      <div className="relative h-[110px] w-[110px] shrink-0 overflow-hidden rounded-lg">
         <Image
           src={service.imageUrl}
           alt={service.name}
@@ -201,16 +200,17 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
         />
       </div>
 
-      <div className="flex w-full min-w-0 flex-col">
-        <h3 className="text-foreground text-sm font-semibold">
+      {/* Conteúdo de Texto */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <h3 className="text-foreground truncate text-sm font-semibold">
           {service.name}
         </h3>
-        <p className="text-muted-foreground mt-1 line-clamp-2 text-xs">
+        <p className="text-muted-foreground mt-1 line-clamp-2 text-xs break-words">
           {service.description}
         </p>
 
-        <div className="mt-3 flex w-full items-center justify-between">
-          <span className="text-foreground text-sm font-bold">
+        <div className="mt-3 flex w-full items-center justify-between gap-2">
+          <span className="text-foreground shrink-0 text-sm font-bold">
             {Intl.NumberFormat("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -230,7 +230,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
             <SheetTrigger asChild>
               <Button
                 color="#1546A1"
-                className="rounded-full px-4 text-xs font-bold"
+                className="shrink-0 rounded-full px-4 text-xs font-bold"
                 size="sm"
               >
                 Reservar
