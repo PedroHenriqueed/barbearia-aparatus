@@ -191,7 +191,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   };
 
   return (
-    <Card className="border-border flex min-w-full flex-row items-center gap-3 rounded-xl border p-3 shadow-sm">
+    <Card className="border-border flex w-full flex-row items-center gap-3 overflow-hidden rounded-xl border p-3 shadow-sm">
       <div className="relative h-[110px] min-h-[110px] w-[110px] min-w-[110px] overflow-hidden rounded-lg">
         <Image
           src={service.imageUrl}
@@ -201,7 +201,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
         />
       </div>
 
-      <div className="flex w-full flex-col">
+      <div className="flex w-full min-w-0 flex-col">
         <h3 className="text-foreground text-sm font-semibold">
           {service.name}
         </h3>
