@@ -1,73 +1,87 @@
-// app/_components/barbershop-details.tsx
 "use client";
 
 import { Button } from "@/app/_components/ui/button";
-import { Separator } from "@/app/_components/ui/separator";
-import { ArrowLeft, Heart, StarIcon } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
-import { useState } from "react";
-import ServiceItem from "./service-item";
 import { Barbershop, BarbershopService } from "@prisma/client";
+import {
+  ChevronLeftIcon,
+  HeartIcon,
+  MapPinIcon,
+  MenuIcon,
+  SmartphoneIcon,
+  StarIcon,
+} from "lucide-react";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import ServiceItem from "./service-item";
+import SidebarSheet from "@/app/_components/sidebar-sheet";
+import { Sheet, SheetTrigger } from "@/app/_components/ui/sheet";
+import { authClient } from "@/lib/auth-client";
 
 interface BarbershopDetailsProps {
   barbershop: Barbershop & {
     services: BarbershopService[];
   };
-  initialFavorite: boolean; // 👈 novo
+  initialFavorite?: boolean;
 }
 
 export default function BarbershopDetails({
   barbershop,
-  initialFavorite, // 👈 novo
+  initialFavorite = false,
 }: BarbershopDetailsProps) {
+  const router = useRouter();
+  const { data: session } = authClient.useSession();
   const [isFavorite, setIsFavorite] = useState(initialFavorite);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFavoriteLoading, setIsFavoriteLoading] = useState(false);
 
-  async function toggleFavorite() {
-    if (isLoading) return;
+  const handleBackClick = () => {
+    router.back();
+  };
 
-    setIsLoading(true);
-    const newState = !isFavorite;
+  const handleCopyPhoneClick = (phone: string) => {
+    navigator.clipboard.writeText(phone);
+    toast.success("Telefone copiado com sucesso!");
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!session?.user) {
+      toast.error("Você precisa estar logado para favoritar!");
+      await authClient.signIn.social({ provider: "google" });
+      return;
+    }
 
     try {
-      setIsFavorite(newState);
-      const res = await fetch("/api/favorites", {
+      setIsFavoriteLoading(true);
+      const response = await fetch("/api/favorites", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          barbershopId: barbershop.id,
-          isFavorite: newState,
-        }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ barbershopId: barbershop.id }),
       });
 
-      if (!res.ok) throw new Error("Erro ao salvar");
+      if (response.ok) {
+        setIsFavorite((prev) => !prev);
+        toast.success(
+          isFavorite
+            ? "Barbearia removida dos favoritos!"
+            : "Barbearia adicionada aos favoritos!",
+        );
+      } else {
+        toast.error("Erro ao atualizar favoritos.");
+      }
     } catch {
-      setIsFavorite(!newState); // rollback
+      toast.error("Erro ao atualizar favoritos.");
     } finally {
-      setIsLoading(false);
+      setIsFavoriteLoading(false);
     }
-  }
-
-  function copyToClipboard(phone: string) {
-    if (typeof navigator !== "undefined" && navigator.clipboard) {
-      navigator.clipboard.writeText(phone);
-    }
-  }
+  };
 
   return (
-    <div className="bg-background min-h-screen w-full overflow-hidden">
-      <div className="relative h-[290px] w-full">
-        <Link href="/" className="absolute top-6 left-6 z-50">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="text-white hover:bg-white/10 rounded-full"
-          >
-            <ArrowLeft className="h-6 w-6" />
-          </Button>
-        </Link>
-
+    <div className="w-full max-w-full overflow-x-hidden pb-6">
+      {/* Imagem do Banner / Header */}
+      <div className="relative h-[250px] w-full">
         <Image
           src={barbershop.imageUrl}
           alt={barbershop.name}
@@ -76,56 +90,75 @@ export default function BarbershopDetails({
           priority
         />
 
-        <div className="absolute bottom-0 left-0 right-0 z-20 bg-black/40 backdrop-blur-md px-6 py-5 rounded-t-3xl flex flex-col gap-1">
-          <div className="flex items-start justify-between w-full">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-white text-2xl font-bold tracking-tight">
-                {barbershop.name}
-              </h1>
-              <p className="text-gray-400 flex items-center gap-1 text-sm">
-                {barbershop.address}
-              </p>
-            </div>
+        {/* Botões Superiores */}
+        <div className="absolute top-4 right-4 left-4 z-10 flex items-center justify-between">
+          <Button
+            size="icon"
+            variant="secondary"
+            className="bg-background/80 h-9 w-9 rounded-full backdrop-blur-sm"
+            onClick={handleBackClick}
+          >
+            <ChevronLeftIcon size={18} />
+          </Button>
 
-            {/* 👇 BOTÃO FAVORITO FUNCIONAL */}
+          <div className="flex items-center gap-2">
             <Button
-              variant="ghost"
               size="icon"
-              disabled={isLoading}
-              onClick={toggleFavorite}
-              className={`text-white hover:bg-white/10 rounded-full transition-all ${
-                isLoading ? "opacity-50" : ""
-              }`}
-              aria-label={
-                isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"
-              }
+              variant="secondary"
+              className="bg-background/80 h-9 w-9 rounded-full backdrop-blur-sm"
+              disabled={isFavoriteLoading}
+              onClick={handleToggleFavorite}
             >
-              <Heart
-                className="h-6 w-6"
-                fill={isFavorite ? "white" : "none"}
-                stroke="white"
-                strokeWidth={2}
+              <HeartIcon
+                size={18}
+                className={
+                  isFavorite ? "fill-red-500 text-red-500" : "text-foreground"
+                }
               />
             </Button>
-          </div>
 
-          <div className="flex items-center gap-2 text-sm">
-            <div className="flex items-center gap-1 text-white">
-              <StarIcon size={14} className="text-white" />
-              <span className="font-semibold text-white">4.8</span>
-              <span className="text-gray-300 text-xs">( 114 avaliações )</span>
-            </div>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button
+                  size="icon"
+                  variant="secondary"
+                  className="bg-background/80 h-9 w-9 rounded-full backdrop-blur-sm"
+                >
+                  <MenuIcon size={18} />
+                </Button>
+              </SheetTrigger>
+              <SidebarSheet />
+            </Sheet>
           </div>
         </div>
       </div>
 
-      <Separator className="my-6" />
+      {/* Informações Principais */}
+      <div className="border-border space-y-2 border-b p-5">
+        <h1 className="text-foreground truncate text-xl font-bold">
+          {barbershop.name}
+        </h1>
 
-      <div>
-        <h2 className="text-muted-foreground mb-3 text-xs font-bold uppercase">
-          SERVIÇOS
+        <div className="flex items-center gap-2">
+          <MapPinIcon size={16} className="text-primary shrink-0" />
+          <p className="text-muted-foreground truncate text-sm">
+            {barbershop.address}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2">
+          <StarIcon size={16} className="fill-primary text-primary shrink-0" />
+          <p className="text-foreground text-sm font-semibold">5,0</p>
+          <p className="text-muted-foreground text-xs">(83 avaliações)</p>
+        </div>
+      </div>
+
+      {/* Seção de Serviços */}
+      <div className="w-full max-w-full space-y-3 overflow-hidden p-5">
+        <h2 className="text-muted-foreground text-xs font-bold uppercase">
+          Serviços
         </h2>
-        <div className="flex flex-col gap-3 text-sm">
+        <div className="flex w-full max-w-full min-w-0 flex-col gap-3">
           {barbershop.services.map((service) => (
             <ServiceItem
               key={service.id}
@@ -136,26 +169,29 @@ export default function BarbershopDetails({
         </div>
       </div>
 
-      <Separator className="my-6" />
-
-      <div className="pb-10">
-        <h2 className="text-muted-foreground mb-3 text-xs font-bold uppercase">
-          CONTATO
+      {/* Seção de Contato */}
+      <div className="w-full max-w-full space-y-3 overflow-hidden p-5">
+        <h2 className="text-muted-foreground text-xs font-bold uppercase">
+          Contato
         </h2>
-        <div className="flex flex-col gap-2">
-          {barbershop.phones.map((phone, index) => (
+        <div className="flex flex-col gap-3">
+          {barbershop.phones.map((phone) => (
             <div
-              key={`${phone}-${index}`}
-              className="flex items-center justify-between gap-2"
+              key={phone}
+              className="flex w-full min-w-0 items-center justify-between gap-2"
             >
-              <div className="flex items-center gap-2">
-                <i className="fi fi-rr-smartphone text-foreground"></i>
-                <span className="text-foreground text-sm">{phone}</span>
+              <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                <SmartphoneIcon
+                  size={16}
+                  className="text-foreground shrink-0"
+                />
+                <p className="text-foreground truncate text-sm">{phone}</p>
               </div>
               <Button
+                variant="outline"
                 size="sm"
-                className="rounded-full px-4 text-xs font-bold"
-                onClick={() => copyToClipboard(phone)}
+                className="shrink-0 rounded-full"
+                onClick={() => handleCopyPhoneClick(phone)}
               >
                 Copiar
               </Button>
