@@ -168,7 +168,6 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     } else {
       await executeInPersonBooking({
         serviceId: service.id,
-        barbershopId: service.babershopId,
         date: bookingDate,
       });
     }
