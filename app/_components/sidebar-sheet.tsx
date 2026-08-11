@@ -16,7 +16,7 @@ import { authClient } from "@/lib/auth-client";
 
 
 interface SidebarSheetProps {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export default function SidebarSheet({ children }: SidebarSheetProps) {
