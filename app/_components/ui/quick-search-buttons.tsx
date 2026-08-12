@@ -24,21 +24,22 @@ export default function QuickSearchOptions() {
         <Link
           key={option.title}
           href={`/barbershops?service=${option.title}`}
-          className="relative flex h-[80px] w-full items-center overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950 transition-all active:scale-95"
+          {/* O segredo para o Safari no iOS está nestas classes abaixo: isolate + mask-image */}
+          className="relative flex h-[80px] w-full items-center overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950 transition-all active:scale-95 isolate [mask-image:linear-gradient(white,white)] [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
         >
-          {/* Imagem com rounded-xl na própria tag para impedir o vazamento no iOS */}
+          {/* Imagem */}
           <Image
             src={option.imageUrl}
             alt={option.title}
             fill
-            className="rounded-xl object-cover"
+            className="object-cover"
           />
 
-          {/* Overlay escuro também com rounded-xl */}
-          <div className="absolute inset-0 z-10 rounded-xl bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
+          {/* Overlay escuro */}
+          <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
 
           {/* Texto do serviço */}
-          <span className="relative z-20 pl-4 text-sm font-bold tracking-wide text-white">
+          <span className="relative z-20 pl-4 text-sm font-bold text-white tracking-wide">
             {option.title}
           </span>
         </Link>
