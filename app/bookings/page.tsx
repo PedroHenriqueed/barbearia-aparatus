@@ -5,9 +5,12 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import BookingItem from "../_components/booking-item";
 import { PageContainer } from "../_components/ui/page";
-import { CalendarX2 } from 'lucide-react';
+import { CalendarX2 } from "lucide-react";
 import { Button } from "../_components/ui/button";
 
+// Força o Next.js a buscar dados atualizados no banco a cada visita
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
 
 const BookingsPage = async () => {
   const session = await auth.api.getSession({
@@ -49,7 +52,7 @@ const BookingsPage = async () => {
         {/* SEÇÃO 1: CONFIRMADOS / ATIVOS */}
         {confirmedBookings.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-gray-400 uppercase text-xs font-bold mb-3">
+            <h2 className="mb-3 text-xs font-bold text-gray-400 uppercase">
               Confirmados
             </h2>
             <div className="flex flex-col gap-3">
@@ -63,32 +66,27 @@ const BookingsPage = async () => {
         {/* SEÇÃO 2: HISTÓRICO / FINALIZADOS */}
         {finishedBookings.length > 0 && (
           <div>
-            <h2 className="text-gray-400 uppercase text-xs font-bold mb-3">
+            <h2 className="mb-3 text-xs font-bold text-gray-400 uppercase">
               Finalizados
             </h2>
             <div className="flex flex-col gap-4">
               {finishedBookings.map((booking) => (
-                <div
-                  key={booking.id}
-                  className="flex flex-col gap-2"
-                >
-                  {/* Card do agendamento antigo */}
+                <div key={booking.id} className="flex flex-col gap-2">
                   <BookingItem booking={booking} />
-
                 </div>
               ))}
             </div>
           </div>
         )}
 
-        {/* ESTADO VAZIO (Caso não tenha nada nem em confirmados nem em histórico) */}
+        {/* ESTADO VAZIO */}
         {confirmedBookings.length === 0 && finishedBookings.length === 0 && (
-          <div className="flex flex-col items-center justify-center min-h-[50vh] text-center gap-3">
-            <CalendarX2 size={72} className="text-gray-400"/>
-            <p className="text-gray-400 text-sm font-medium mb-4">
+          <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
+            <CalendarX2 size={72} className="text-gray-400" />
+            <p className="mb-4 text-sm font-medium text-gray-400">
               Você não possui agendamentos!
             </p>
-            <Button asChild className="bg-blue-600 text-white rounded-full">
+            <Button asChild className="rounded-full bg-blue-600 text-white">
               <Link href="/busca">Buscar Barbearias</Link>
             </Button>
           </div>
