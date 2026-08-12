@@ -1,16 +1,16 @@
 "use server";
 
 import { actionClient } from "@/lib/action-client";
-import { prisma } from "@/lib/prisma";
-import { revalidatePath } from "next/cache";
+import { returnValidationErrors } from "next-safe-action";
+import { headers } from "next/headers";
 import { z } from "zod";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { returnValidationErrors } from "next-safe-action";
+import { prisma } from "@/lib/prisma";
+import { revalidatePath } from "next/cache";
 import Stripe from "stripe";
 
 const inputSchema = z.object({
-  bookingId: z.string().uuid(),
+  bookingId: z.string(), // Aceita qualquer formato de string ID
 });
 
 export const cancelBooking = actionClient
@@ -22,65 +22,61 @@ export const cancelBooking = actionClient
 
     if (!session?.user) {
       return returnValidationErrors(inputSchema, {
-        _errors: ["Você precisa estar logado para cancelar uma reserva."],
+        _errors: ["Não autorizado."],
       });
     }
 
-    // Verifica se a reserva existe e pertence ao usuário
     const booking = await prisma.booking.findUnique({
-      where: {
-        id: bookingId,
-        userId: session.user.id,
-      },
+      where: { id: bookingId },
     });
 
     if (!booking) {
       return returnValidationErrors(inputSchema, {
-        _errors: ["Reserva não encontrada."],
+        _errors: ["Agendamento não encontrado."],
       });
     }
 
-    // 🔥 NOVO: Integração com o Stripe para fazer o estorno
-    if (booking.paymentId) {
-      try {
-        if (!process.env.STRIPE_SECRET_KEY) {
-          throw new Error("STRIPE_SECRET_KEY is not set");
+    if (booking.userId !== session.user.id) {
+      return returnValidationErrors(inputSchema, {
+        _errors: ["Você não tem permissão para cancelar este agendamento."],
+      });
+    }
+
+    // Tenta realizar o estorno no Stripe caso o agendamento tenha sido pago online
+    if (booking.paymentStatus === "PAID" && booking.paymentId) {
+      if (process.env.STRIPE_SECRET_KEY) {
+        try {
+          const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+
+          if (booking.paymentId.startsWith("pi_")) {
+            await stripe.refunds.create({
+              payment_intent: booking.paymentId,
+            });
+          } else if (booking.paymentId.startsWith("ch_")) {
+            await stripe.refunds.create({
+              charge: booking.paymentId,
+            });
+          }
+        } catch (stripeError: any) {
+          console.error(
+            "⚠️ Erro ao estornar no Stripe (cancelamento prosseguirá):",
+            stripeError.message,
+          );
         }
-
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-          apiVersion: "2025-10-29.clover",
-        });
-
-        // Solicita o estorno total da cobrança usando o ID salvo
-        await stripe.refunds.create({
-          charge: booking.paymentId,
-        });
-
-        console.log(
-          `✅ Estorno realizado com sucesso para a cobrança: ${booking.paymentId}`,
-        );
-      } catch (stripeError: any) {
-        console.error(
-          "❌ Erro ao realizar estorno no Stripe:",
-          stripeError.message,
-        );
-        return returnValidationErrors(inputSchema, {
-          _errors: ["Ocorreu um erro ao processar o estorno do pagamento."],
-        });
       }
     }
 
-    // Atualiza o status da reserva para cancelada
+    // Marca o agendamento como cancelado no banco de dados
     await prisma.booking.update({
-      where: {
-        id: bookingId,
-      },
+      where: { id: bookingId },
       data: {
         cancelled: true,
-        cancelledAt: new Date(), // Opcional: marca a data exata do cancelamento se quiser
+        cancelledAt: new Date(),
       },
     });
 
-    revalidatePath("/");
     revalidatePath("/bookings");
+    revalidatePath("/");
+
+    return { success: true };
   });
