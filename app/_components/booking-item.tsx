@@ -1,7 +1,8 @@
 "use client";
 
 import { Card, CardContent } from "./ui/card";
-import { Badge } from "./ui/badge";
+import { generateGoogleCalendarUrl } from "@/lib/utils";
+import { CalendarPlus, Smartphone } from "lucide-react";
 import { AvatarImage, Avatar, AvatarFallback } from "./ui/avatar";
 import { Prisma } from "@prisma/client";
 import { format, isFuture } from "date-fns";
@@ -17,7 +18,6 @@ import {
 } from "./ui/sheet";
 import Image from "next/image";
 import { Button } from "./ui/button";
-import { Smartphone } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { cancelBooking } from "../_actions/cancel-booking";
 import { toast } from "sonner";
@@ -45,6 +45,7 @@ interface BookingItemProps {
 
 const BookingItem = ({ booking }: BookingItemProps) => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+
   const { executeAsync, isPending } = useAction(cancelBooking, {
     onSuccess: () => {
       toast.success("Reserva cancelada com sucesso!");
@@ -55,10 +56,16 @@ const BookingItem = ({ booking }: BookingItemProps) => {
     },
   });
 
-  // LÓGICA MANTIDA 100% INTACTA
   const isBookingConfirmed = isFuture(booking.date) && !booking.cancelled;
   const isPaid = booking.paymentStatus === "PAID";
   const isOnlinePayment = booking.paymentMethod === "ONLINE";
+
+  const googleCalendarUrl = generateGoogleCalendarUrl({
+    title: `${booking.service.name} - ${booking.barbershop.name}`,
+    description: `Serviço: ${booking.service.name}\nBarbearia: ${booking.barbershop.name}`,
+    location: booking.barbershop.address,
+    startDate: booking.date,
+  });
 
   const handleCancelBooking = async () => {
     await executeAsync({ bookingId: booking.id });
@@ -74,7 +81,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
   return (
     <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
       <SheetTrigger asChild>
-        {/* CARD PRINCIPAL DA LISTA (LIMPO VISUALMENTE) */}
+        {/* CARD PRINCIPAL DA LISTA DE AGENDAMENTOS */}
         <Card
           className={`min-w-full cursor-pointer rounded-xl border shadow-sm transition-all ${
             isBookingConfirmed
@@ -115,7 +122,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
         </Card>
       </SheetTrigger>
 
-      {/* MODAL DETALHADO (MANTIDO COMPLETO COM TODAS AS INFORMAÇÕES E STATUS) */}
+      {/* MODAL DETALHADO DO AGENDAMENTO */}
       <SheetContent
         side="bottom"
         className="flex h-[90vh] flex-col overflow-hidden rounded-t-[20px] p-0 sm:h-[85vh]"
@@ -154,13 +161,8 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </div>
           </Card>
 
-          {/* Badges de Status no Modal */}
-          <div className="mt-2 mb-2 flex flex-wrap gap-2">
-
-          </div>
-
           {/* Detalhes do Serviço */}
-          <Card className="border-border mb-6 rounded-xl border p-4 shadow-sm">
+          <Card className="border-border my-6 rounded-xl border p-4 shadow-sm">
             <CardContent className="flex flex-col gap-3 p-0">
               <div className="flex items-center justify-between">
                 <h3 className="text-foreground text-base font-bold">
@@ -195,7 +197,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                 </span>
               </div>
 
-              {/* Informações adicionais de Pagamento */}
+              {/* Informações de Pagamento */}
               <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
                 <span className="text-muted-foreground text-sm">Método</span>
                 <span className="text-foreground text-sm font-medium">
@@ -218,6 +220,24 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </CardContent>
           </Card>
 
+          {/* Botão para adicionar ao Google Agenda */}
+          {isBookingConfirmed && (
+            <Button
+              asChild
+              variant="outline"
+              className="mb-6 h-11 w-full gap-2 rounded-xl border-zinc-800 bg-zinc-900 text-white hover:bg-zinc-800"
+            >
+              <a
+                href={googleCalendarUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <CalendarPlus size={18} className="text-blue-500" />
+                Adicionar ao Google Agenda
+              </a>
+            </Button>
+          )}
+
           {/* Telefones */}
           <div className="flex flex-col gap-3">
             {booking.barbershop.phones.map((phone, index) => (
@@ -239,6 +259,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
           </div>
         </div>
 
+        {/* RODAPÉ DO SHEET */}
         <SheetFooter className="border-border bg-background flex flex-row gap-3 border-t p-5">
           <SheetClose asChild>
             <Button
@@ -249,7 +270,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
             </Button>
           </SheetClose>
 
-          {/* Botão de cancelar */}
+          {/* Botão de Cancelar */}
           {isBookingConfirmed && (
             <AlertDialog>
               <AlertDialogTrigger asChild>

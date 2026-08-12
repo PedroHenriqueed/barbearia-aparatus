@@ -12,7 +12,13 @@ import {
 } from "@/app/_components/ui/sheet";
 import { Barbershop, BarbershopService } from "@prisma/client";
 import Image from "next/image";
-import { ChevronLeft, ChevronRight, CreditCard, Wallet } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  CreditCard,
+  Wallet,
+  CalendarPlus,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 import { useAction } from "next-safe-action/hooks";
 import { createBookingCheckoutSession } from "@/app/_actions/create-booking-checkout-session";
@@ -24,6 +30,16 @@ import { format, set } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import { generateGoogleCalendarUrl } from "@/lib/utils";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/app/_components/ui/alert-dialog";
 
 interface ServiceItemProps {
   service: BarbershopService;
@@ -33,6 +49,9 @@ interface ServiceItemProps {
 export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
+
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [calendarUrl, setCalendarUrl] = useState<string>("");
 
   const { data: session } = authClient.useSession();
 
@@ -82,9 +101,23 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
         queryClient.invalidateQueries({
           queryKey: ["date-available-time-slots", service.babershopId, date],
         });
+
+        // 1. Gera o link do Google Agenda ANTES de limpar os seletores de horário
+        if (date && selectedTime) {
+          const [hour, minute] = selectedTime.split(":").map(Number);
+          const bookingDate = set(date, { hours: hour, minutes: minute });
+          const url = generateGoogleCalendarUrl({
+            title: `${service.name} - ${barbershop.name}`,
+            description: `Serviço: ${service.name}\nBarbearia: ${barbershop.name}`,
+            location: barbershop.address,
+            startDate: bookingDate,
+          });
+          setCalendarUrl(url);
+        }
+
+        // 2. Fecha a gaveta de agendamento e abre o modal do Google Agenda
         setSheetIsOpen(false);
-        setSelectedTime(undefined);
-        router.push("/bookings");
+        setShowSuccessDialog(true);
       },
       onError: ({ error }) => {
         toast.error(error.serverError || "Erro ao realizar agendamento.");
@@ -171,6 +204,12 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     }
   };
 
+  const handleCloseSuccessDialog = () => {
+    setShowSuccessDialog(false);
+    setSelectedTime(undefined);
+    router.push("/bookings");
+  };
+
   const capitalizedMonth = format(currentMonth, "MMMM", {
     locale: ptBR,
   }).replace(/^./, (str) => str.toUpperCase());
@@ -229,8 +268,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
           >
             <SheetTrigger asChild>
               <Button
-                color="#1546A1"
-                className="shrink-0 rounded-full px-4 text-xs font-bold"
+                className="shrink-0 rounded-full bg-[#1546A1] px-4 text-xs font-bold text-white hover:bg-[#1546A1]/90"
                 size="sm"
               >
                 Reservar
@@ -466,6 +504,57 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
           </Sheet>
         </div>
       </div>
+
+      {/* MODAL DE PERGUNTA PÓS-AGENDAMENTO */}
+      <AlertDialog
+        open={showSuccessDialog}
+        onOpenChange={(open) => {
+          if (!open) handleCloseSuccessDialog();
+        }}
+      >
+        <AlertDialogContent className="border-border w-[90%] max-w-[400px] rounded-2xl bg-zinc-950 text-center text-white">
+          <AlertDialogHeader className="items-center text-center">
+            <AlertDialogTitle className="text-center text-lg font-bold">
+              Agendamento Confirmado! 🎉
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-center text-sm text-zinc-400">
+              Sua reserva foi realizada com sucesso. Deseja salvá-la no seu
+              Google Agenda para não esquecer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter className="mt-4 flex flex-col gap-2 sm:flex-col">
+            {/* Botão para abrir o Google Agenda */}
+            <Button
+              asChild
+              className="h-11 w-full gap-2 rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700"
+            >
+              <a
+                href={calendarUrl || "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => {
+                  setShowSuccessDialog(false);
+                  setTimeout(() => {
+                    router.push("/bookings");
+                  }, 300);
+                }}
+              >
+                <CalendarPlus size={18} />
+                Adicionar ao Google Agenda
+              </a>
+            </Button>
+
+            {/* Botão de recusar/fechar */}
+            <AlertDialogCancel
+              className="border-border mt-0 h-11 w-full rounded-xl bg-transparent text-white hover:bg-zinc-900"
+              onClick={handleCloseSuccessDialog}
+            >
+              Agora não
+            </AlertDialogCancel>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }
