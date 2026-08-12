@@ -17,17 +17,20 @@ const quickSearchOptions: QuickSearchOption[] = [
   { title: "Hidratação", imageUrl: "/hidratacao.png" },
 ];
 
-export default function QuickSearchOptions() {
+export default function QuickSearchButtons() {
   return (
     <div className="grid grid-cols-2 gap-3 px-5">
       {quickSearchOptions.map((option) => (
         <Link
           key={option.title}
           href={`/barbershops?service=${option.title}`}
-          {/* O segredo para o Safari no iOS está nestas classes abaixo: isolate + mask-image */}
-          className="relative flex h-[80px] w-full items-center overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950 transition-all active:scale-95 isolate [mask-image:linear-gradient(white,white)] [-webkit-mask-image:-webkit-radial-gradient(white,black)]"
+          className="relative isolate flex h-20 w-full items-center overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950 transition-all active:scale-95"
+          style={{
+            WebkitMaskImage: "-webkit-radial-gradient(white, black)",
+            maskImage: "linear-gradient(white, white)",
+          }}
         >
-          {/* Imagem */}
+          {/* Imagem de fundo */}
           <Image
             src={option.imageUrl}
             alt={option.title}
@@ -39,7 +42,7 @@ export default function QuickSearchOptions() {
           <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
 
           {/* Texto do serviço */}
-          <span className="relative z-20 pl-4 text-sm font-bold text-white tracking-wide">
+          <span className="relative z-20 pl-4 text-sm font-bold tracking-wide text-white">
             {option.title}
           </span>
         </Link>
