@@ -34,21 +34,23 @@ const FavoritesPage = async () => {
     <div className="flex min-h-screen flex-col pb-20">
       <Header />
 
-      <PageContainer className="p-5">
-        <h1 className="mb-6 text-xl font-bold">Barbearias Favoritas</h1>
+      <div className="p-5">
+        <PageContainer>
+          <h1 className="mb-6 text-xl font-bold">Barbearias Favoritas</h1>
 
-        {favoriteBarbershops.length > 0 ? (
-          <div className="grid grid-rows gap-4 sm:grid-cols-3 md:grid-cols-4">
-            {favoriteBarbershops.map((barbershop) => (
-              <BarbershopItem key={barbershop.id} barbershop={barbershop} />
-            ))}
-          </div>
-        ) : (
-          <p className="text-muted-foreground text-sm font-medium">
-            Você ainda não possui barbearias favoritadas.
-          </p>
-        )}
-      </PageContainer>
+          {favoriteBarbershops.length > 0 ? (
+            <div className="grid-rows grid gap-4 sm:grid-cols-3 md:grid-cols-4">
+              {favoriteBarbershops.map((barbershop) => (
+                <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+              ))}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm font-medium">
+              Você ainda não possui barbearias favoritadas.
+            </p>
+          )}
+        </PageContainer>
+      </div>
     </div>
   );
 };
