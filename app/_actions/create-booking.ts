@@ -4,13 +4,13 @@ import { z } from "zod";
 import { actionClient } from "@/lib/action-client";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { returnValidationErrors } from "next-safe-action";
 import { headers } from "next/headers";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 
 const inputSchema = z.object({
-  serviceId: z.string().uuid(),
-  date: z.date(),
+  // 1. Removido o .uuid() para aceitar os CUIDs gerados pelo Prisma
+  serviceId: z.string().min(1, "Serviço inválido"),
+  date: z.coerce.date(),
 });
 
 export const createInPersonBooking = actionClient
@@ -21,9 +21,7 @@ export const createInPersonBooking = actionClient
     });
 
     if (!session?.user) {
-      return returnValidationErrors(inputSchema, {
-        _errors: ["Unauthorized"],
-      });
+      throw new Error("Sessão expirada. Faça login novamente.");
     }
 
     const service = await prisma.barbershopService.findUnique({
@@ -33,26 +31,25 @@ export const createInPersonBooking = actionClient
     });
 
     if (!service) {
-      return returnValidationErrors(inputSchema, {
-        _errors: ["Service not found"],
-      });
+      throw new Error("Serviço não encontrado.");
     }
 
-    // Verificar se já existe agendamento para essa data na mesma barbearia
+    // 2. Verifica se existe um agendamento ativo (não cancelado) para o mesmo horário
     const existingBooking = await prisma.booking.findFirst({
       where: {
         babershopId: service.babershopId,
         date: date,
+        cancelled: false, // Ignora agendamentos que já foram cancelados
       },
     });
 
     if (existingBooking) {
-      return returnValidationErrors(inputSchema, {
-        _errors: ["Booking already exists"],
-      });
+      throw new Error(
+        "Este horário acabou de ser preenchido por outro cliente.",
+      );
     }
 
-    // Criar o agendamento presencial
+    // 3. Cria o agendamento presencial
     const booking = await prisma.booking.create({
       data: {
         servicesId: serviceId,
