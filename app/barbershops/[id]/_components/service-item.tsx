@@ -14,7 +14,7 @@ import {
   ChevronRight,
   CreditCard,
   Wallet,
-  CalendarPlus,
+  Calendar1,
 } from "lucide-react";
 
 import { Button } from "@/app/_components/ui/button";
@@ -521,7 +521,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                   }, 300);
                 }}
               >
-                <CalendarPlus size={18} />
+                <Calendar1 size={18} />
                 Adicionar ao Google Agenda
               </a>
             </Button>
