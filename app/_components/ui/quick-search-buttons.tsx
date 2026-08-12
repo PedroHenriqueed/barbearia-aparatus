@@ -21,12 +21,14 @@ export default function QuickSearchButtons() {
   return (
     <div className="grid grid-cols-2 gap-3 px-5">
       {quickSearchOptions.map((option) => (
-        <Link
+        <div
           key={option.title}
-          href={`/barbershops?service=${option.title}`}
-          className="relative block h-20 w-full rounded-2xl bg-zinc-950 shadow-lg shadow-white/10"
+          className="h-20 w-full rounded-2xl shadow-lg shadow-black/40 [-webkit-transform:translateZ(0)]"
         >
-          <div className="absolute inset-0 overflow-hidden rounded-2xl">
+          <Link
+            href={`/barbershops?service=${option.title}`}
+            className="relative block h-full w-full overflow-hidden rounded-2xl"
+          >
             <Image
               src={option.imageUrl}
               alt={option.title}
@@ -38,8 +40,8 @@ export default function QuickSearchButtons() {
             <span className="relative z-10 flex h-full items-center pl-4 text-sm font-bold tracking-wide text-white">
               {option.title}
             </span>
-          </div>
-        </Link>
+          </Link>
+        </div>
       ))}
     </div>
   );
