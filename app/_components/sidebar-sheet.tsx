@@ -14,7 +14,6 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { authClient } from "@/lib/auth-client";
 
-
 interface SidebarSheetProps {
   children?: React.ReactNode;
 }
@@ -37,7 +36,7 @@ export default function SidebarSheet({ children }: SidebarSheetProps) {
     { title: "Cabelo" },
     { title: "Barba" },
     { title: "Acabamento" },
-    { title: "Sobrancelha" }, 
+    { title: "Sobrancelha" },
     { title: "Massagem" },
     { title: "Hidratação" },
   ];
@@ -106,16 +105,16 @@ export default function SidebarSheet({ children }: SidebarSheetProps) {
         <div className="border-secondary flex flex-col gap-3 border-b border-solid px-3 py-5">
           {quickSearchOptions.map((option) => (
             <SheetClose key={option.title} asChild>
-            <Button
-              key={option.title}
-              className="justify-start gap-2"
-              variant="ghost"
-              asChild
-            >
-              <Link href={`/barbershops?search=${option.title}`}>
-                {option.title}
-              </Link>
-            </Button>
+              <Button
+                key={option.title}
+                className="justify-start gap-2"
+                variant="ghost"
+                asChild
+              >
+                <Link href={`/barbershops?search=${option.title}`}>
+                  {option.title}
+                </Link>
+              </Button>
             </SheetClose>
           ))}
         </div>
