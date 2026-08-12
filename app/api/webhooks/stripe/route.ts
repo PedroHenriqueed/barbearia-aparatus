@@ -1,16 +1,23 @@
-import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
-import { PaymentMethod, PaymentStatus } from "@prisma/client"; // 1. Importação dos Enums
+import { PaymentMethod, PaymentStatus } from "@prisma/client";
 
 export async function POST(request: Request) {
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: "2025-10-29.clover",
+    apiVersion: "2025-10-29.clover" as any,
   });
 
   const body = await request.text();
-  const signature = (await headers()).get("Stripe-Signature") as string;
+  // Obtém a assinatura diretamente dos headers da requisição
+  const signature = request.headers.get("stripe-signature") as string;
+
+  if (!signature) {
+    return NextResponse.json(
+      { error: "Assinatura do Stripe ausente" },
+      { status: 400 },
+    );
+  }
 
   let event: Stripe.Event;
 
@@ -21,7 +28,7 @@ export async function POST(request: Request) {
       process.env.STRIPE_WEBHOOK_SECRET as string,
     );
   } catch (error: any) {
-    console.error(`Erro de assinatura no Webhook: ${error.message}`);
+    console.error(`❌ Erro de assinatura no Webhook: ${error.message}`);
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
@@ -35,40 +42,41 @@ export async function POST(request: Request) {
 
     if (serviceId && barbershopId && userId && date) {
       try {
-        // 🔒 CHECAGEM 1: já existe booking para essa sessão do Stripe?
+        // 🔒 CHECAGEM 1: Já existe booking para essa sessão do Stripe?
         const existingBySession = await prisma.booking.findFirst({
           where: { stripeSessionId: session.id },
         });
 
         if (existingBySession) {
-          console.log("⚠️ Evento duplicado ignorado (session.id já processado).");
+          console.log(
+            "⚠️ Evento duplicado ignorado (session.id já processado).",
+          );
           return NextResponse.json({ received: true });
         }
 
-        const paymentIntent = await stripe.paymentIntents.retrieve(
-          session.payment_intent as string,
-        );
+        // Identificador do pagamento (utiliza o PaymentIntent ID ou o próprio Session ID como fallback)
+        const paymentId = (session.payment_intent as string) || session.id;
 
-        const stripeChargeId = paymentIntent.latest_charge as string;
-
-        // 🔒 CHECAGEM 2: já existe booking com esse paymentId?
+        // 🔒 CHECAGEM 2: Já existe booking com esse paymentId? (CORRIGIDO: usa a coluna paymentId)
         const existingByPayment = await prisma.booking.findFirst({
-          where: { stripeSessionId: stripeChargeId },
+          where: { paymentId: paymentId },
         });
 
         if (existingByPayment) {
-          console.log("⚠️ Evento duplicado ignorado (paymentId já processado).");
+          console.log(
+            "⚠️ Evento duplicado ignorado (paymentId já processado).",
+          );
           return NextResponse.json({ received: true });
         }
 
-        // 2. Criação do agendamento com as flags de pagamento corretas
+        // Criação da reserva
         await prisma.booking.create({
           data: {
             date: new Date(date),
-            paymentId: stripeChargeId,
+            paymentId: paymentId,
             stripeSessionId: session.id,
-            paymentMethod: PaymentMethod.ONLINE, // Fix: Marca como pagamento ONLINE
-            paymentStatus: PaymentStatus.PAID,   // Fix: Marca como PAGO
+            paymentMethod: PaymentMethod.ONLINE,
+            paymentStatus: PaymentStatus.PAID,
             user: {
               connect: { id: userId },
             },
@@ -81,7 +89,7 @@ export async function POST(request: Request) {
           },
         });
 
-        console.log("✅ Reserva criada com sucesso! Charge ID:", stripeChargeId);
+        console.log("✅ Reserva criada com sucesso! Session ID:", session.id);
       } catch (dbError: any) {
         console.error("❌ ERRO AO SALVAR RESERVA NO BANCO (Webhook):", dbError);
         return NextResponse.json(
