@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 
 interface QuickSearchOption {
@@ -23,13 +24,23 @@ export default function QuickSearchButtons() {
         <Link
           key={option.title}
           href={`/barbershops?service=${option.title}`}
-          className="relative flex h-16 w-full items-center overflow-hidden rounded-xl border border-zinc-800 bg-cover bg-center transition-all active:scale-95"
-          style={{ backgroundImage: `url(${option.imageUrl})` }}
+          className="relative flex h-20 w-full items-center overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-950 transition-all active:scale-95"
         >
-          {/* OVERLAY ESCURO (Aplica o escurecimento e gradiente sem vazar) */}
-          <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/80 to-black/40" />
+          {/* Imagem base com tom escuro reduzido */}
+          <Image
+            src={option.imageUrl}
+            alt={option.title}
+            fill
+            className="object-cover opacity-40 brightness-75"
+          />
 
-          {/* TEXTO DO SERVIÇO */}
+          {/* OVERLAY ESCURO TOTAL (Uniformiza 100% dos cantos e bordas) */}
+          <div className="absolute inset-0 bg-black/50" />
+
+          {/* GRADIENTE PARA LEITURA DO TEXTO */}
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+
+          {/* Texto do serviço */}
           <span className="relative z-10 pl-4 text-sm font-bold tracking-wide text-white">
             {option.title}
           </span>
