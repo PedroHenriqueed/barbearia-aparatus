@@ -24,20 +24,24 @@ export default function QuickSearchButtons() {
         <Link
           key={option.title}
           href={`/barbershops?service=${option.title}`}
-          className="relative block h-20 w-full rounded-2xl [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.5))] transition-transform active:scale-95"
+          className="group block h-20 w-full"
         >
-          <div className="absolute inset-0 overflow-hidden rounded-2xl">
-            <Image
-              src={option.imageUrl}
-              alt={option.title}
-              fill
-              className="object-cover opacity-40 brightness-75"
-            />
-            <div className="absolute inset-0 bg-black/50" />
-            <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-            <span className="relative z-10 flex h-full items-center pl-4 text-sm font-bold tracking-wide text-white">
-              {option.title}
-            </span>
+          {/* Elemento A: só sombra, sem overflow, sem transform */}
+          <div className="h-full w-full rounded-2xl shadow-md shadow-black/50">
+            {/* Elemento B: overflow-hidden + transform de escala isolados */}
+            <div className="relative h-full w-full overflow-hidden rounded-2xl transition-transform group-active:scale-95">
+              <Image
+                src={option.imageUrl}
+                alt={option.title}
+                fill
+                className="object-cover opacity-40 brightness-75"
+              />
+              <div className="absolute inset-0 bg-black/50" />
+              <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
+              <span className="relative z-10 flex h-full items-center pl-4 text-sm font-bold tracking-wide text-white">
+                {option.title}
+              </span>
+            </div>
           </div>
         </Link>
       ))}
