@@ -1,11 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import Header from "../_components/header";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import BookingItem from "../_components/booking-item";
 import { PageContainer } from "../_components/ui/page";
 import { CalendarX2 } from "lucide-react";
+import UnauthenticatedMessage from "@/app/_components/unauthenticated-message";
 import { Button } from "../_components/ui/button";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +19,12 @@ const BookingsPage = async () => {
   });
 
   if (!session?.user) {
-    return redirect("/");
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Header />
+        <UnauthenticatedMessage />
+      </div>
+    );
   }
 
   const cutoffTime = new Date();
