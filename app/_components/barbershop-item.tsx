@@ -41,7 +41,7 @@ const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
         <div className="mb-1 flex items-center gap-2 text-[10px]">
           <span
             className={`font-bold uppercase ${
-              isOpen ? "text-green-500" : "text-muted-foreground"
+              isOpen ? "text-muted-foreground" : "text-muted-foreground"
             }`}
           >
             {isOpen ? "Aberto" : "Fechado"}
