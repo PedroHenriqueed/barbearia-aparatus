@@ -23,7 +23,7 @@ export default function QuickSearchButtons() {
       {quickSearchOptions.map((option) => (
         <div
           key={option.title}
-          className="h-20 w-full rounded-2xl shadow-lg shadow-black/40 [-webkit-transform:translateZ(0)]"
+          className="h-20 w-full rounded-2xl shadow-lg shadow-red-500/80 [-webkit-transform:translateZ(0)]"
         >
           <Link
             href={`/barbershops?service=${option.title}`}
@@ -33,6 +33,7 @@ export default function QuickSearchButtons() {
               src={option.imageUrl}
               alt={option.title}
               fill
+              sizes="(max-width: 768px) 50vw, 300px"
               className="object-cover opacity-40 brightness-75"
             />
             <div className="absolute inset-0 bg-black/50" />
