@@ -1,17 +1,11 @@
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import Header from "../_components/header";
-import { redirect } from "next/navigation";
-import Link from "next/link";
-import BookingItem from "../_components/booking-item";
-import { PageContainer } from "../_components/ui/page";
-import { CalendarX2 } from "lucide-react";
+import { prisma } from "@/lib/prisma";
+import Header from "@/app/_components/header";
+import BookingItem from "@/app/_components/booking-item";
 import UnauthenticatedMessage from "@/app/_components/unauthenticated-message";
-import { Button } from "../_components/ui/button";
 
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
 
 const BookingsPage = async () => {
   const session = await auth.api.getSession({
@@ -27,38 +21,48 @@ const BookingsPage = async () => {
     );
   }
 
-  const cutoffTime = new Date();
-  cutoffTime.setHours(cutoffTime.getHours() - 2);
-
-  // Busca Confirmados
-  const confirmedBookings = await prisma.booking.findMany({
+  // Busca todos os agendamentos do usuário logado
+  const bookings = await prisma.booking.findMany({
     where: {
       userId: session.user.id,
-      date: { gte: cutoffTime },
     },
-    include: { service: true, barbershop: true },
-    orderBy: { date: "asc" },
+    include: {
+      service: true,
+      barbershop: true,
+    },
+    orderBy: {
+      date: "asc",
+    },
   });
 
-  // Busca Histórico (Finalizados)
-  const finishedBookings = await prisma.booking.findMany({
-    where: {
-      userId: session.user.id,
-      date: { lt: cutoffTime },
-    },
-    include: { service: true, barbershop: true },
-    orderBy: { date: "desc" },
-  });
+  const now = new Date();
+
+  // 1. Confirmados: Não cancelados e com data futura/atual
+  const confirmedBookings = bookings.filter(
+    (booking) => !booking.cancelled && new Date(booking.date) >= now,
+  );
+
+  // 2. Finalizados: Não cancelados e com data passada
+  const finishedBookings = bookings.filter(
+    (booking) => !booking.cancelled && new Date(booking.date) < now,
+  );
+
+  // 3. Cancelados: Propriedade cancelled verdadeira
+  const cancelledBookings = bookings.filter(
+    (booking) => booking.cancelled === true,
+  );
 
   return (
-    <div className="flex min-h-screen flex-col pb-20">
-      <PageContainer>
-        <h1 className="mt-5 mb-6 text-xl font-bold">Agendamentos</h1>
+    <div className="flex min-h-screen flex-col pb-24">
+      <Header />
 
-        {/* SEÇÃO 1: CONFIRMADOS / ATIVOS */}
+      <div className="flex flex-col gap-6 p-5">
+        <h1 className="text-xl font-bold">Agendamentos</h1>
+
+        {/* 1. Agendamentos Confirmados (Futuros) */}
         {confirmedBookings.length > 0 && (
-          <div className="mb-8">
-            <h2 className="mb-3 text-xs font-bold text-gray-400 uppercase">
+          <div className="flex flex-col gap-3">
+            <h2 className="text-xs font-bold text-gray-400 uppercase">
               Confirmados
             </h2>
             <div className="flex flex-col gap-3">
@@ -69,35 +73,43 @@ const BookingsPage = async () => {
           </div>
         )}
 
-        {/* SEÇÃO 2: HISTÓRICO / FINALIZADOS */}
+        {/* 2. Agendamentos Finalizados (Passados) */}
         {finishedBookings.length > 0 && (
-          <div>
-            <h2 className="mb-3 text-xs font-bold text-gray-400 uppercase">
+          <div className="flex flex-col gap-3">
+            <h2 className="text-xs font-bold text-gray-400 uppercase">
               Finalizados
             </h2>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-3">
               {finishedBookings.map((booking) => (
-                <div key={booking.id} className="flex flex-col gap-2">
-                  <BookingItem booking={booking} />
-                </div>
+                <BookingItem key={booking.id} booking={booking} />
               ))}
             </div>
           </div>
         )}
 
-        {/* ESTADO VAZIO */}
-        {confirmedBookings.length === 0 && finishedBookings.length === 0 && (
-          <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 text-center">
-            <CalendarX2 size={72} className="text-gray-400" />
-            <p className="mb-4 text-sm font-medium text-gray-400">
-              Você não possui agendamentos!
-            </p>
-            <Button asChild className="rounded-full bg-blue-600 text-white">
-              <Link href="/busca">Buscar Barbearias</Link>
-            </Button>
+        {/* 3. Agendamentos Cancelados */}
+        {cancelledBookings.length > 0 && (
+          <div className="flex flex-col gap-3">
+            <h2 className="text-xs font-bold text-gray-400 uppercase">
+              Cancelados
+            </h2>
+            <div className="flex flex-col gap-3">
+              {cancelledBookings.map((booking) => (
+                <BookingItem key={booking.id} booking={booking} />
+              ))}
+            </div>
           </div>
         )}
-      </PageContainer>
+
+        {/* Caso o usuário não tenha nenhum agendamento */}
+        {confirmedBookings.length === 0 &&
+          finishedBookings.length === 0 &&
+          cancelledBookings.length === 0 && (
+            <p className="text-sm text-gray-400">
+              Você ainda não possui agendamentos.
+            </p>
+          )}
+      </div>
     </div>
   );
 };
