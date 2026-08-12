@@ -24,7 +24,7 @@ export default function QuickSearchButtons() {
         <Link
           key={option.title}
           href={`/barbershops?service=${option.title}`}
-          className="relative block h-20 w-full rounded-2xl bg-zinc-950 shadow-md shadow-black/50"
+          className="relative block h-20 w-full rounded-2xl bg-zinc-950 shadow-lg shadow-white/10"
         >
           <div className="absolute inset-0 overflow-hidden rounded-2xl">
             <Image
