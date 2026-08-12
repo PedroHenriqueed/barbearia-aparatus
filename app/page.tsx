@@ -124,17 +124,6 @@ const Home = async (props: HomeProps) => {
           </PageSection>
         )}
 
-        {favoriteBarbershops.length > 0 && (
-          <PageSection>
-            <PageSectionTitle>Favoritos</PageSectionTitle>
-            <PageScrollContainer>
-              {favoriteBarbershops.map((barbershop) => (
-                <BarbershopItem key={barbershop.id} barbershop={barbershop} />
-              ))}
-            </PageScrollContainer>
-          </PageSection>
-        )}
-
         <PageSection>
           <PageSectionTitle>Recomendados</PageSectionTitle>
           <PageScrollContainer>
