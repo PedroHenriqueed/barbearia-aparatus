@@ -19,30 +19,32 @@ const quickSearchOptions: QuickSearchOption[] = [
 
 export default function QuickSearchButtons() {
   return (
-    <div className="grid grid-cols-2 gap-3 px-5">
+    <div className="grid grid-cols-2 gap-2.5 px-5">
       {quickSearchOptions.map((option) => (
         <Link
           key={option.title}
           href={`/barbershops?service=${option.title}`}
-          className="relative isolate flex h-20 w-full items-center overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950 transition-all active:scale-95"
+          /* h-16 deixa o card um pouco mais compacto (64px) */
+          className="relative flex h-16 w-full transform-gpu items-center overflow-hidden rounded-xl border border-zinc-800 bg-black transition-all active:scale-95"
           style={{
             WebkitMaskImage: "-webkit-radial-gradient(white, black)",
-            maskImage: "linear-gradient(white, white)",
+            WebkitTransform: "translateZ(0)",
+            transform: "translateZ(0)",
           }}
         >
-          {/* Imagem de fundo */}
+          {/* Imagem com opacidade reduzida (opacity-50) */}
           <Image
             src={option.imageUrl}
             alt={option.title}
             fill
-            className="object-cover"
+            className="rounded-xl object-cover opacity-50"
           />
 
-          {/* Overlay escuro */}
-          <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
+          {/* OVERLAY REFORÇADO (Sombreamento muito mais escuro e denso) */}
+          <div className="absolute inset-0 z-10 rounded-xl bg-gradient-to-r from-black/95 via-black/80 to-black/40" />
 
           {/* Texto do serviço */}
-          <span className="relative z-20 pl-4 text-sm font-bold tracking-wide text-white">
+          <span className="relative z-20 pl-3.5 text-sm font-bold tracking-wide text-white">
             {option.title}
           </span>
         </Link>
