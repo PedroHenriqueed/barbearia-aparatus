@@ -24,24 +24,17 @@ export default function QuickSearchButtons() {
         <Link
           key={option.title}
           href={`/barbershops?service=${option.title}`}
-          className="relative block h-20 w-full rounded-2xl shadow-md shadow-black/50 transition-all active:scale-95"
+          className="relative block h-20 w-full rounded-2xl [filter:drop-shadow(0_2px_4px_rgba(0,0,0,0.5))] transition-transform active:scale-95"
         >
-          {/* Imagem base com tom escuro reduzido */}
-          <div className="absolute inset-0 overflow-hidden rounded-2xl [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
+          <div className="absolute inset-0 overflow-hidden rounded-2xl">
             <Image
               src={option.imageUrl}
               alt={option.title}
               fill
               className="object-cover opacity-40 brightness-75"
             />
-
-            {/* OVERLAY ESCURO TOTAL (Uniformiza 100% dos cantos e bordas) */}
             <div className="absolute inset-0 bg-black/50" />
-
-            {/* GRADIENTE PARA LEITURA DO TEXTO */}
             <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/40 to-transparent" />
-
-            {/* Texto do serviço */}
             <span className="relative z-10 flex h-full items-center pl-4 text-sm font-bold tracking-wide text-white">
               {option.title}
             </span>
