@@ -1,9 +1,15 @@
-import {betterAuth} from 'better-auth';
+import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { prisma } from "./prisma";
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
+  baseURL: process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL,
+  trustedOrigins: [
+    "https://barbershop-trivo.vercel.app",
+    process.env.BETTER_AUTH_URL,
+    process.env.NEXT_PUBLIC_APP_URL,
+  ].filter(Boolean) as string[],
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
