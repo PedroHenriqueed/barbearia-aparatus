@@ -497,7 +497,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
         <AlertDialogContent className="border-border w-[90%] max-w-[400px] rounded-2xl bg-zinc-950 text-center text-white">
           <AlertDialogHeader className="items-center text-center">
             <AlertDialogTitle className="text-center text-lg font-bold">
-              Agendamento Confirmado! 🎉
+              Agendamento Confirmado!
             </AlertDialogTitle>
             <AlertDialogDescription className="text-center text-sm text-zinc-400">
               Sua reserva foi realizada com sucesso. Deseja salvá-la no seu
