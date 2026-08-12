@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Header from "@/app/_components/header";
 import BarbershopItem from "@/app/_components/barbershop-item";
-import { PageContainer } from "@/app/_components/ui/page";
+import { PageContainer, PageSectionTitle } from "@/app/_components/ui/page";
+
 
 export const dynamic = "force-dynamic";
 
@@ -36,7 +37,7 @@ const FavoritesPage = async () => {
 
       <div className="p-5">
         <PageContainer>
-          <h1 className="mb-6 text-xl font-bold">Barbearias Favoritas</h1>
+          <PageSectionTitle>Favoritos</PageSectionTitle>
 
           {favoriteBarbershops.length > 0 ? (
             <div className="grid-rows grid gap-4 sm:grid-cols-3 md:grid-cols-4">
