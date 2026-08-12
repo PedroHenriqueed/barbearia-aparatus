@@ -3,14 +3,13 @@ import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(request: Request) {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: "2025-10-29.clover" as any,
-  });
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
   const body = await request.text();
-  // Obtém a assinatura diretamente dos headers da requisição
-  const signature = request.headers.get("stripe-signature") as string;
+  const signature = request.headers.get("stripe-signature");
 
   if (!signature) {
     return NextResponse.json(
@@ -42,7 +41,7 @@ export async function POST(request: Request) {
 
     if (serviceId && barbershopId && userId && date) {
       try {
-        // 🔒 CHECAGEM 1: Já existe booking para essa sessão do Stripe?
+        // 🔒 CHECAGEM 1: Já existe booking com essa sessão do Stripe?
         const existingBySession = await prisma.booking.findFirst({
           where: { stripeSessionId: session.id },
         });
@@ -54,10 +53,9 @@ export async function POST(request: Request) {
           return NextResponse.json({ received: true });
         }
 
-        // Identificador do pagamento (utiliza o PaymentIntent ID ou o próprio Session ID como fallback)
         const paymentId = (session.payment_intent as string) || session.id;
 
-        // 🔒 CHECAGEM 2: Já existe booking com esse paymentId? (CORRIGIDO: usa a coluna paymentId)
+        // 🔒 CHECAGEM 2: Já existe booking com esse paymentId?
         const existingByPayment = await prisma.booking.findFirst({
           where: { paymentId: paymentId },
         });
@@ -69,7 +67,7 @@ export async function POST(request: Request) {
           return NextResponse.json({ received: true });
         }
 
-        // Criação da reserva
+        // Criação da reserva no banco de dados
         await prisma.booking.create({
           data: {
             date: new Date(date),

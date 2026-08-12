@@ -8,7 +8,6 @@ import { PageContainer } from "../_components/ui/page";
 import { CalendarX2 } from "lucide-react";
 import { Button } from "../_components/ui/button";
 
-// Força o Next.js a buscar dados atualizados no banco a cada visita
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
