@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "./ui/card";
 import { generateGoogleCalendarUrl } from "@/lib/utils";
-import { CalendarPlus, Smartphone } from "lucide-react";
+import { Calendar1, Smartphone } from "lucide-react";
 import { AvatarImage, Avatar, AvatarFallback } from "./ui/avatar";
 import { Prisma } from "@prisma/client";
 import { format, isFuture } from "date-fns";
@@ -232,7 +232,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                <CalendarPlus size={18} className="text-blue-500" />
+                <Calendar1 size={18} className="text-blue-500" />
                 Adicionar ao Google Agenda
               </a>
             </Button>
