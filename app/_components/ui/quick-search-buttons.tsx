@@ -27,7 +27,7 @@ export default function QuickSearchButtons() {
           className="relative block h-20 w-full rounded-2xl shadow-md shadow-black/50 transition-all active:scale-95"
         >
           {/* Imagem base com tom escuro reduzido */}
-          <div className="absolute inset-0 overflow-hidden rounded-2xl">
+          <div className="absolute inset-0 overflow-hidden rounded-2xl [-webkit-mask-image:-webkit-radial-gradient(white,black)]">
             <Image
               src={option.imageUrl}
               alt={option.title}
