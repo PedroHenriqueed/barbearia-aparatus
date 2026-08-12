@@ -24,20 +24,20 @@ export default function QuickSearchOptions() {
         <Link
           key={option.title}
           href={`/barbershops?service=${option.title}`}
-          className="relative flex h-[80px] w-full items-center overflow-hidden rounded-2xl border border-zinc-800/80 bg-zinc-900 transition-all active:scale-95"
+          className="relative flex h-[80px] w-full items-center overflow-hidden rounded-xl border border-zinc-800/80 bg-zinc-950 transition-all active:scale-95"
         >
-          {/* Imagem de Fundo */}
+          {/* Imagem com rounded-xl na própria tag para impedir o vazamento no iOS */}
           <Image
             src={option.imageUrl}
             alt={option.title}
             fill
-            className="object-cover"
+            className="rounded-xl object-cover"
           />
 
-          {/* OVERLAY ESCURO COM GRADIENTE (Resolve a falta de sombra/contraste) */}
-          <div className="absolute inset-0 z-10 bg-gradient-to-r from-black/85 via-black/55 to-transparent" />
+          {/* Overlay escuro também com rounded-xl */}
+          <div className="absolute inset-0 z-10 rounded-xl bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
 
-          {/* Texto do Serviço */}
+          {/* Texto do serviço */}
           <span className="relative z-20 pl-4 text-sm font-bold tracking-wide text-white">
             {option.title}
           </span>
