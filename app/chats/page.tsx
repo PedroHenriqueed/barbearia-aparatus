@@ -86,11 +86,17 @@ export default function ChatPage() {
       {/* CABEÇALHO */}
       <header className="flex items-center justify-between border-b border-solid border-gray-100 p-5">
         <Link href="/">
-          <ChevronLeft size={24} className="text-blue-600 hover:text-black" />
+          <ChevronLeft size={24} className="text-black hover:text-gray-600" />
         </Link>
-       <Image src="/trivo_logo.png" alt="Trivo" height={18} width={110} className=" flex items-center"/>
+        <Image
+          src="/trivo_logo.png"
+          alt="Trivo"
+          height={18}
+          width={110}
+          className="flex items-center"
+        />
 
-        <div className="w-6 flex items-center"></div>
+        <div className="flex w-6 items-center"></div>
       </header>
 
       {/* AVISO DE STATUS */}
@@ -109,7 +115,7 @@ export default function ChatPage() {
               className={`flex gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}
             >
               {m.role !== "user" && (
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-blue-700">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-gray-200 bg-white text-black">
                   <Sparkles size={16} />
                 </div>
               )}
@@ -125,11 +131,21 @@ export default function ChatPage() {
                 ) : m.role === "assistant" ? (
                   <ReactMarkdown
                     components={{
-                      p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
-                      ul: ({ children }) => <ul className="ml-4 list-disc space-y-1">{children}</ul>,
-                      ol: ({ children }) => <ol className="ml-4 list-decimal space-y-1">{children}</ol>,
+                      p: ({ children }) => (
+                        <p className="mb-2 last:mb-0">{children}</p>
+                      ),
+                      ul: ({ children }) => (
+                        <ul className="ml-4 list-disc space-y-1">{children}</ul>
+                      ),
+                      ol: ({ children }) => (
+                        <ol className="ml-4 list-decimal space-y-1">
+                          {children}
+                        </ol>
+                      ),
                       li: ({ children }) => <li>{children}</li>,
-                      strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
+                      strong: ({ children }) => (
+                        <strong className="font-semibold">{children}</strong>
+                      ),
                     }}
                   >
                     {m.content}
@@ -154,26 +170,26 @@ export default function ChatPage() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             placeholder="Digite sua mensagem"
-            className="h-14 w-full rounded-full border text-black border-gray-200 bg-white pl-5 pr-24 text-sm outline-none"
+            className="h-14 w-full rounded-full border border-gray-200 bg-white pr-24 pl-5 text-sm text-black outline-none"
             autoComplete="off"
             disabled={isLoading}
           />
           <div className="absolute right-2 flex items-center gap-1">
             <button
               type="button"
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1546A1] text-white transition-colors hover:bg-[#60A5FA]"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#000000] text-white transition-colors hover:bg-gray-800"
             >
               <Mic size={20} />
             </button>
             <button
               type="submit"
               disabled={isLoading || !inputValue}
-              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#1546A1] text-white transition-colors hover:bg-[#60A5FA] disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-10 items-center justify-center rounded-full bg-[#000000] text-white transition-colors hover:bg-gray-800 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <Loader2 size={16} className="animate-spin" />
               ) : (
-                <Send size={16} className="mr-0.5 mt-0.5" />
+                <Send size={16} className="mt-0.5 mr-0.5" />
               )}
             </button>
           </div>
