@@ -1,14 +1,12 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import Header from "@/app/_components/header";
 import UnauthenticatedMessage from "@/app/_components/unauthenticated-message";
 import Image from "next/image";
 import Link from "next/link";
 import { StarIcon, MapPinIcon, Calendar } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { PageSectionTitle } from "../_components/ui/page";
 
 export const dynamic = "force-dynamic";
 
@@ -17,17 +15,16 @@ export default async function MyReviewsPage() {
     headers: await headers(),
   });
 
-  // 1. Se não estiver logado, exibe a tela pedindo login
   if (!session?.user) {
     return (
-      <div className="flex min-h-screen flex-col">
-        <Header />
+      <main className="bg-background flex min-h-screen w-full flex-col">
+        <div className="bg-background/95 sticky top-0 z-20 px-5 pt-4 pb-2 backdrop-blur-sm">
+        </div>
         <UnauthenticatedMessage />
-      </div>
+      </main>
     );
   }
 
-  // 2. Busca no banco todas as avaliações feitas por este usuário
   const reviews = await prisma.review.findMany({
     where: {
       userId: session.user.id,
@@ -41,20 +38,23 @@ export default async function MyReviewsPage() {
   });
 
   return (
-    <div className="flex min-h-screen flex-col pb-24">
-      <Header />
+    <main className="bg-background flex min-h-screen w-full flex-col pb-24">
+      {/* Topo Padronizado */}
+      <div className="bg-background/95 sticky top-0 z-20 px-5 pt-4 pb-2 backdrop-blur-sm">
+      </div>
 
-      <div className="flex flex-col gap-6 p-5">
-        <PageSectionTitle>Avaliações</PageSectionTitle>
+      {/* Conteúdo com Título Alinhado */}
+      <div className="flex flex-col gap-5 px-5 pt-3">
+        <h1 className="text-xl font-bold text-white">Avaliações</h1>
 
         {reviews.length > 0 ? (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {reviews.map((review) => (
               <div
                 key={review.id}
-                className="flex flex-col gap-3 rounded-2xl border border-zinc-800 bg-zinc-950 p-4 shadow-sm"
+                className="flex flex-col gap-3 rounded-2xl border border-zinc-800/80 bg-zinc-950 p-4 shadow-sm"
               >
-                {/* Cabeçalho do Card com a Barbearia */}
+                {/* Barbearia */}
                 <div className="flex items-center gap-3 border-b border-zinc-800/80 pb-3">
                   <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-xl">
                     <Image
@@ -72,10 +72,7 @@ export default async function MyReviewsPage() {
                       {review.barbershop.name}
                     </Link>
                     <p className="flex items-center gap-1 truncate text-xs text-zinc-400">
-                      <MapPinIcon
-                        size={12}
-                        className="shrink-0 text-white"
-                      />
+                      <MapPinIcon size={12} className="shrink-0 text-white" />
                       <span className="truncate">
                         {review.barbershop.address}
                       </span>
@@ -83,13 +80,13 @@ export default async function MyReviewsPage() {
                   </div>
                 </div>
 
-                {/* Estrelas atribuídas e Data */}
+                {/* Estrelas + Data */}
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <StarIcon
                         key={star}
-                        size={16}
+                        size={15}
                         className={
                           star <= review.rating
                             ? "fill-white text-white"
@@ -110,7 +107,7 @@ export default async function MyReviewsPage() {
                   </span>
                 </div>
 
-                {/* Comentário deixado */}
+                {/* Comentário */}
                 {review.comment ? (
                   <p className="rounded-xl bg-zinc-900/60 p-3 text-xs break-words text-zinc-300 italic">
                     "{review.comment}"
@@ -129,6 +126,6 @@ export default async function MyReviewsPage() {
           </p>
         )}
       </div>
-    </div>
+    </main>
   );
 }

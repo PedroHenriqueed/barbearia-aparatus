@@ -1,22 +1,21 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
-import { Card, CardContent } from "./ui/card";
 
-const Header = () => {
+export default function Header() {
   return (
-    <header>
+    // h-10 fixa a altura do header para não empurrar nada para baixo
+    <header className="flex h-10 w-full items-center justify-between bg-transparent">
+      <Link href="/" className="flex items-center">
+        <Image
+          src="/trivo_logo.png"
+          alt="Trivo"
+          height={20}
+          width={90}
+          className=" invert h-8 w-auto object-contain"
+        />
+      </Link>
 
-      <Card className="rounded-none border-none shadow-none bg-transparent">
-        <CardContent className="flex flex-row items-center justify-between px-2 pt-5">
-          <Link href="/">
-            <Image src="/trivo_logo.png" alt="FSW Barber" className="invert" height={80} width={110} />
-          </Link>
-        </CardContent>
-      </Card>
+
     </header>
   );
-};
-
-export default Header;
+}

@@ -2,10 +2,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import Header from "@/app/_components/header";
 import BarbershopItem from "@/app/_components/barbershop-item";
-import { PageContainer, PageSectionTitle } from "@/app/_components/ui/page";
-
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +15,6 @@ const FavoritesPage = async () => {
     return redirect("/");
   }
 
-  // 1. Busca os favoritos usando 'prisma.favorite'
   const userFavorites = await prisma.favorite.findMany({
     where: {
       userId: session.user.id,
@@ -28,31 +24,31 @@ const FavoritesPage = async () => {
     },
   });
 
-  // 2. Extrai as barbearias da relação
   const favoriteBarbershops = userFavorites.map((fav) => fav.barbershop);
 
   return (
-    <div className="flex min-h-screen flex-col pb-20">
-      <Header />
-
-      <div className="p-1">
-        <PageContainer>
-          <PageSectionTitle>Favoritos</PageSectionTitle>
-
-          {favoriteBarbershops.length > 0 ? (
-            <div className="grid-rows grid gap-4 sm:grid-cols-3 md:grid-cols-4">
-              {favoriteBarbershops.map((barbershop) => (
-                <BarbershopItem key={barbershop.id} barbershop={barbershop} />
-              ))}
-            </div>
-          ) : (
-            <p className="text-muted-foreground text-sm font-medium">
-              Você ainda não possui barbearias favoritadas.
-            </p>
-          )}
-        </PageContainer>
+    <main className="bg-background flex min-h-screen w-full flex-col pb-24">
+      {/* Topo Padronizado */}
+      <div className="bg-background/95 sticky top-0 z-20 px-5 pt-4 pb-2 backdrop-blur-sm">
       </div>
-    </div>
+
+      {/* Conteúdo com Título Alinhado */}
+      <div className="flex flex-col gap-5 px-5 pt-3">
+        <h1 className="text-xl font-bold text-white">Favoritos</h1>
+
+        {favoriteBarbershops.length > 0 ? (
+          <div className="flex flex-col gap-3 sm:grid sm:grid-cols-2 md:grid-cols-3">
+            {favoriteBarbershops.map((barbershop) => (
+              <BarbershopItem key={barbershop.id} barbershop={barbershop} />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-zinc-400">
+            Você ainda não possui barbearias favoritadas.
+          </p>
+        )}
+      </div>
+    </main>
   );
 };
 

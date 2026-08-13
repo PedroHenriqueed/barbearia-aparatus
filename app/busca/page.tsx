@@ -1,29 +1,44 @@
 // app/barbershops/page.tsx
-import SearchInput from "@/app/_components/search-input"
-import BarbershopItem from "@/app/_components/barbershop-item"
-import { prisma } from "@/lib/prisma"
-import { SearchIcon } from "lucide-react"
-import { Barbershop } from "@prisma/client"
-import { ServiceCard } from "@/app/_components/ui/service-card"
-import Link from "next/link"
-import { PageSectionTitle } from "../_components/ui/page"
+import SearchInput from "@/app/_components/search-input";
+import BarbershopItem from "@/app/_components/barbershop-item";
+import { prisma } from "@/lib/prisma";
+import { SearchIcon } from "lucide-react";
+import { Barbershop } from "@prisma/client";
+import { ServiceCard } from "@/app/_components/ui/service-card";
+import Link from "next/link";
+import { PageSectionTitle } from "../_components/ui/page";
 
 const services = [
-  { title: "Cabelo",      image: "/cabelo.jpg",      href: "/barbershops?search=Cabelo"      },
-  { title: "Barba",       image: "/barba.jpg",        href: "/barbershops?search=Barba"       },
-  { title: "Acabamento",  image: "/pezinho.jpg",   href: "/barbershops?search=Acabamento"  },
-  { title: "Sobrancelha", image: "/sobrancelha.jpg",  href: "/barbershops?search=Sobrancelha" },
-  { title: "Massagem",    image: "/massagem.jpg",     href: "/barbershops?search=Massagem"    },
-  { title: "Hidratação",  image: "/hidratacao.jpg",   href: "/barbershops?search=Hidratação"  },
-]
-
+  { title: "Cabelo", image: "/cabelo.jpg", href: "/barbershops?search=Cabelo" },
+  { title: "Barba", image: "/barba.jpg", href: "/barbershops?search=Barba" },
+  {
+    title: "Acabamento",
+    image: "/pezinho.jpg",
+    href: "/barbershops?search=Acabamento",
+  },
+  {
+    title: "Sobrancelha",
+    image: "/sobrancelha.jpg",
+    href: "/barbershops?search=Sobrancelha",
+  },
+  {
+    title: "Massagem",
+    image: "/massagem.jpg",
+    href: "/barbershops?search=Massagem",
+  },
+  {
+    title: "Hidratação",
+    image: "/hidratacao.jpg",
+    href: "/barbershops?search=Hidratação",
+  },
+];
 
 export default async function BuscaPage({
   searchParams,
 }: {
-  searchParams: Promise<{ search?: string }>
+  searchParams: Promise<{ search?: string }>;
 }) {
-  const search = (await searchParams).search ?? ""
+  const search = (await searchParams).search ?? "";
 
   const barbershops: Barbershop[] = search
     ? await prisma.barbershop.findMany({
@@ -38,56 +53,53 @@ export default async function BuscaPage({
           ],
         },
       })
-    : []
+    : [];
 
   const featuredBarbershops: Barbershop[] = !search
     ? await prisma.barbershop.findMany({ take: 6 })
-    : []
+    : [];
 
   return (
-    <div className=" flex flex-col pb-24 min-h-screen bg-background">
-      {/* ── Cabeçalho sticky com busca ── */}
-      <div className="relative  top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border px-5 pt-5 pb-4 shadow-sm">
+    <main className="bg-background flex min-h-screen w-full flex-col pb-24">
+      {/* ── Cabeçalho Sticky (Header + Barra de Busca) ── */}
+      <div className="border-border bg-background/95 sticky top-0 z-20 flex flex-col gap-4 border-b px-5 pt-4 pb-4 backdrop-blur-sm">
         <SearchInput defaultSearch={search} />
       </div>
 
       {/* ══════════════════════════════════
-          ESTADO VAZIO — sem busca ativa
-      ══════════════════════════════════ */}
+          ESTADO VAZIO — Sem busca ativa
+         ══════════════════════════════════ */}
       {!search && (
-        <div className="flex flex-col gap-8 px-5 pt-6">
+        <div className="flex flex-col gap-6 px-5 pt-5">
+          {/* Seção Buscar por serviço */}
+          <section className="flex flex-col gap-3">
+            <PageSectionTitle>Buscar por serviço</PageSectionTitle>
+            <div className="grid grid-cols-2 gap-3">
+              {services.map((service) => (
+                <ServiceCard
+                  key={service.title}
+                  title={service.title}
+                  image={service.image}
+                  href={service.href}
+                />
+              ))}
+            </div>
+          </section>
 
-<section className="flex flex-col gap-3">
-
-<PageSectionTitle>Buscar por serviço</PageSectionTitle>
-
-  <div className="grid grid-cols-2 gap-3">
-    {services.map((service) => (
-      <ServiceCard
-        key={service.title}
-        title={service.title}
-        image={service.image}
-        href={service.href}
-      />
-    ))}
-  </div>
-</section>
-
-
-          {/* ── Barbearias em destaque ── */}
+          {/* Seção Barbearias Populares */}
           {featuredBarbershops.length > 0 && (
-            <section>
-              <div className="flex items-center justify-between mb-3">
-            <PageSectionTitle>Barbearias Populares</PageSectionTitle>
-                {/* Badge "Ver todas" com a cor primary */}
+            <section className="flex flex-col gap-3">
+              <div className="flex items-center justify-between">
+                <PageSectionTitle>Barbearias Populares</PageSectionTitle>
                 <Link
                   href="/barbershops"
-                  className="text-xs font-semibold text-primary hover:underline"
+                  className="text-primary text-xs font-semibold hover:underline"
                 >
                   Ver todas
                 </Link>
               </div>
-              <div className="grid grid-cols-1 gap-4">
+
+              <div className="flex flex-col gap-3">
                 {featuredBarbershops.map((barbershop) => (
                   <BarbershopItem key={barbershop.id} barbershop={barbershop} />
                 ))}
@@ -98,18 +110,17 @@ export default async function BuscaPage({
       )}
 
       {/* ══════════════════════════════════
-          ESTADO COM BUSCA — resultados
-      ══════════════════════════════════ */}
+          ESTADO COM BUSCA — Resultados
+         ══════════════════════════════════ */}
       {search && (
         <div className="flex flex-col gap-5 px-5 pt-5">
-
-          {/* ── Pill de contagem de resultados ── */}
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-accent w-fit">
+          {/* Tag com contagem de resultados */}
+          <div className="bg-accent flex w-fit items-center gap-2 rounded-lg px-3 py-2">
             <SearchIcon size={14} className="text-primary" />
-            <p className="text-xs text-accent-foreground">
+            <p className="text-accent-foreground text-xs">
               {barbershops.length > 0 ? (
                 <>
-                  <span className="font-bold text-primary">
+                  <span className="text-primary font-bold">
                     {barbershops.length}
                   </span>{" "}
                   resultado{barbershops.length > 1 ? "s" : ""} para{" "}
@@ -124,42 +135,36 @@ export default async function BuscaPage({
             </p>
           </div>
 
-          {/* ── Grid de resultados ── */}
+          {/* Lista de resultados em cards verticais */}
           {barbershops.length > 0 ? (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col gap-3">
               {barbershops.map((b) => (
                 <BarbershopItem key={b.id} barbershop={b} />
               ))}
             </div>
           ) : (
-            /* ── Estado vazio — sem resultados ── */
-            <div className="flex flex-col items-center justify-center gap-4 mt-16 text-center max-w-xs mx-auto">
-              {/* Ícone centralizado com fundo accent */}
-              <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center text-4xl shadow-inner">
+            /* Estado sem resultados com sugestões */
+            <div className="mx-auto mt-12 flex max-w-xs flex-col items-center justify-center text-center">
+              <div className="bg-accent mb-3 flex h-20 w-20 items-center justify-center rounded-full text-4xl shadow-inner">
                 💈
               </div>
 
               <div className="flex flex-col gap-1">
-                <p className="text-base font-bold text-foreground">
+                <p className="text-foreground text-base font-bold">
                   Nenhuma barbearia encontrada
                 </p>
-                <p className="text-sm text-muted-foreground">
+                <p className="text-muted-foreground text-xs">
                   Tente buscar por outros serviços
                 </p>
               </div>
 
-              {/* Sugestões rápidas — pill com borda primary */}
-              <div className="flex flex-wrap justify-center gap-2 mt-1">
+              {/* Sugestões rápidas de busca */}
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
                 {["Cabelo", "Barba", "Sobrancelha", "Acabamento"].map((s) => (
                   <Link
                     key={s}
                     href={`/barbershops?search=${s}`}
-                    className="
-                      px-4 py-1.5 rounded-full text-xs font-semibold
-                      border border-primary text-primary
-                      hover:bg-primary hover:text-primary-foreground
-                      transition-all duration-200
-                    "
+                    className="border-primary text-primary hover:bg-primary hover:text-primary-foreground rounded-full border px-3.5 py-1 text-xs font-semibold transition-all duration-200"
                   >
                     {s}
                   </Link>
@@ -169,6 +174,6 @@ export default async function BuscaPage({
           )}
         </div>
       )}
-    </div>
-  )
+    </main>
+  );
 }

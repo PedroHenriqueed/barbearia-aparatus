@@ -1,7 +1,6 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import Header from "@/app/_components/header";
 import BookingItem from "@/app/_components/booking-item";
 import UnauthenticatedMessage from "@/app/_components/unauthenticated-message";
 
@@ -15,7 +14,6 @@ const BookingsPage = async () => {
   if (!session?.user) {
     return (
       <div className="flex min-h-screen flex-col">
-        <Header />
         <UnauthenticatedMessage />
       </div>
     );
@@ -53,10 +51,15 @@ const BookingsPage = async () => {
   );
 
   return (
-    <div className="flex min-h-screen flex-col pb-24">
-      <Header />
+    <main className="bg-background flex min-h-screen w-full flex-col pb-24">
 
-      <div className="flex flex-col gap-6 p-5">
+      <div className="bg-background/95 sticky top-0 z-20 px-5 pt-4 pb-2 backdrop-blur-sm">
+      </div>
+
+      {/* ── 2. CONTEÚDO PRINCIPAL (Espaçamento e Título Alinhados) ── */}
+      <div className="flex flex-col gap-5 px-5 pt-3">
+        {/* Título da Página */}
+        <h1 className="text-xl font-bold text-white">Agendamentos</h1>
 
         {/* 1. Agendamentos Confirmados (Futuros) */}
         {confirmedBookings.length > 0 && (
@@ -109,7 +112,7 @@ const BookingsPage = async () => {
             </p>
           )}
       </div>
-    </div>
+    </main>
   );
 };
 

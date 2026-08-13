@@ -2,12 +2,6 @@ import Header from "./_components/header";
 import BookingItem from "./_components/booking-item";
 import { prisma } from "@/lib/prisma";
 import BarbershopItem from "./_components/barbershop-item";
-import {
-  PageContainer,
-  PageSectionTitle,
-  PageSection,
-  PageScrollContainer,
-} from "./_components/ui/page";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { ChatButton } from "./_components/chat-button";
@@ -34,20 +28,6 @@ const Home = async (props: HomeProps) => {
     },
   });
 
-  const favoriteBarbershops = session?.user
-    ? await prisma.barbershop.findMany({
-        where: {
-          favorites: { some: { userId: session.user.id } },
-        },
-      })
-    : [];
-
-  const popularBarbershops = await prisma.barbershop.findMany({
-    orderBy: {
-      name: "desc",
-    },
-  });
-
   const confirmedBooking = session?.user
     ? await prisma.booking.findFirst({
         where: {
@@ -68,10 +48,9 @@ const Home = async (props: HomeProps) => {
     : null;
 
   return (
-    <main className="bg-background flex min-h-screen flex-col pb-24">
-      {/* ── SEÇÃO HERO COM VÍDEO E DEGRADÊ INFERIOR ── */}
-      <section className="relative flex min-h-[420px] w-full flex-col justify-between overflow-hidden pb-6">
-        {/* Vídeo em Background */}
+    <main className="bg-background min-h-screen w-full pb-24">
+      {/* ── 1. HERO COM VÍDEO ── */}
+      <section className="relative h-[220px] w-full overflow-hidden">
         <video
           autoPlay
           loop
@@ -82,21 +61,16 @@ const Home = async (props: HomeProps) => {
           <source src="/hero.mp4" type="video/mp4" />
         </video>
 
-        {/* Overlay Escuro Geral */}
-        <div className="absolute inset-0 bg-black/55 backdrop-blur-[1px]" />
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-[1px]" />
+        <div className="via-background/60 to-background pointer-events-none absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-b from-transparent" />
 
-        {/* DEGRADÊ PARA A PÁGINA (Fade suave na borda inferior do vídeo) */}
-        <div className="via-background/60 to-background pointer-events-none absolute inset-x-0 bottom-0 z-10 h-36 bg-gradient-to-b from-transparent" />
-
-        {/* Header transparente sobre o vídeo */}
-        <div className="relative z-20">
+        <div className="relative z-20 flex h-full flex-col justify-between p-4">
+          {/* O Header tem altura fixa, então não afeta o layout do restante */}
           <Header />
-        </div>
 
-        {/* Conteúdo da Saudação e do Campo de Busca */}
-        <div className="relative z-20 flex flex-1 flex-col justify-end px-5 pt-8">
-          <div className="mt- flex flex-col gap-1">
-            <h2 className="text-3xl tracking-tight text-white">
+          {/* A saudação fica anchored na parte de baixo */}
+          <div className="flex flex-col gap-0.5 pb-1">
+            <h2 className="text-xl tracking-tight text-white">
               {session?.user ? (
                 <>
                   <span className="font-normal">Olá, </span>
@@ -106,34 +80,40 @@ const Home = async (props: HomeProps) => {
                 <span className="font-bold">Olá!</span>
               )}
             </h2>
-            <p className="text-sm font-medium text-gray-300 capitalize">
+            <p className="text-xs font-medium text-gray-300 capitalize">
               {format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR })}
             </p>
           </div>
         </div>
       </section>
 
-      {/* Restante do conteúdo */}
-      <PageContainer>
-        <ChatButton />
-
+      {/* ── 2. CONTEÚDO PRINCIPAL ── */}
+      <div className="flex flex-col gap-5 px-5 pt-3">
+        {/* Próximo Agendamento */}
         {confirmedBooking && (
-          <PageSection>
-            <PageSectionTitle>Próximo Agendamento</PageSectionTitle>
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-bold text-gray-400 uppercase">
+              Próximo Agendamento
+            </h2>
             <BookingItem booking={confirmedBooking} />
-          </PageSection>
+          </div>
         )}
 
-        <PageSection>
-          <PageSectionTitle>Recomendados</PageSectionTitle>
-          <PageScrollContainer>
+        {/* Recomendados */}
+        <div className="flex flex-col gap-2">
+          <h2 className="text-xs font-bold text-gray-400 uppercase">
+            Recomendados
+          </h2>
+          {/* Renderiza os cards diretamente para preservar a altura nativa do BarbershopItem */}
+          <div className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
             {recommendedBarbershops.map((barbershop) => (
               <BarbershopItem key={barbershop.id} barbershop={barbershop} />
             ))}
-          </PageScrollContainer>
-        </PageSection>
+          </div>
+        </div>
+      </div>
 
-      </PageContainer>
+      <ChatButton />
     </main>
   );
 };
