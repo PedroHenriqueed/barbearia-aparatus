@@ -54,25 +54,27 @@ export default function BottomNav() {
 
   return (
     <>
-      {/* ── BARRA FIXA NAVEGAÇÃO IGUAL À FOTO ── */}
-      <nav className="fixed right-0 bottom-0 left-0 z-50 border-t border-zinc-800/80 bg-zinc-950/95 pt-2 pb-5 backdrop-blur-md">
-        <ul className="grid w-full grid-cols-5 items-center">
+      {/* ── BARRA FIXA NAVEGAÇÃO ── */}
+      <nav className="pb-safe fixed right-0 bottom-0 left-0 z-50 border-t border-zinc-800/80 bg-zinc-950/95 backdrop-blur-md">
+        {/* flex w-full sem restrição de max-w distorce menos em diferentes celulares */}
+        <ul className="flex h-16 w-full items-center justify-between px-2">
           {/* 4 Primeiros itens */}
           {navItems.map(({ label, href, icon: Icon }) => {
             const isActive = pathname === href;
             return (
-              <li key={href} className="flex justify-center">
+              /* flex-1 min-w-0 garante que a coluna tenha exatamente 20% de largura independente do texto */
+              <li key={href} className="flex min-w-0 flex-1 justify-center">
                 <Link
                   href={href}
-                  className={`flex w-full flex-col items-center justify-center gap-1 transition-all ${
+                  className={`flex w-full flex-col items-center justify-center gap-1 rounded-xl py-1.5 transition-all ${
                     isActive
                       ? "text-white"
                       : "text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
-                  <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} />
+                  <Icon size={20} strokeWidth={isActive ? 2.2 : 1.8} />
                   <span
-                    className={`truncate text-[11px] font-medium ${
+                    className={`w-full truncate text-center text-[10px] font-medium tracking-tighter ${
                       isActive ? "font-bold text-white" : ""
                     }`}
                   >
@@ -83,12 +85,12 @@ export default function BottomNav() {
             );
           })}
 
-          {/* 5º item: Perfil (Abre a Gaveta) */}
-          <li className="flex justify-center">
+          {/* 5º item: Perfil */}
+          <li className="flex min-w-0 flex-1 justify-center">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
-                <button className="flex w-full flex-col items-center justify-center gap-1 text-zinc-400 transition-all hover:text-zinc-200">
-                  <div className="relative flex items-center justify-center">
+                <button className="flex w-full flex-col items-center justify-center gap-1 rounded-xl py-1.5 text-zinc-400 transition-all hover:text-zinc-200">
+                  <div className="relative">
                     {session?.user ? (
                       <Avatar className="h-5 w-5 border border-zinc-700">
                         <AvatarImage src={session.user.image ?? ""} />
@@ -97,10 +99,10 @@ export default function BottomNav() {
                         </AvatarFallback>
                       </Avatar>
                     ) : (
-                      <User size={22} strokeWidth={1.8} />
+                      <User size={20} strokeWidth={1.8} />
                     )}
                   </div>
-                  <span className="truncate text-[11px] font-medium">
+                  <span className="w-full truncate text-center text-[10px] font-medium tracking-tighter">
                     Perfil
                   </span>
                 </button>
@@ -111,7 +113,7 @@ export default function BottomNav() {
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
 
-                {/* Topo do Menu */}
+                {/* Topo do Menu: Usuário logado ou Botão de Login */}
                 <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-4">
                   {session?.user ? (
                     <>
