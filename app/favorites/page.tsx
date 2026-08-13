@@ -35,7 +35,7 @@ const FavoritesPage = async () => {
     <div className="flex min-h-screen flex-col pb-20">
       <Header />
 
-      <div className="p-5">
+      <div className="p-1">
         <PageContainer>
           <PageSectionTitle>Favoritos</PageSectionTitle>
 

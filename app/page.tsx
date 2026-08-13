@@ -119,7 +119,7 @@ const Home = async (props: HomeProps) => {
 
         {confirmedBooking && (
           <PageSection>
-            <PageSectionTitle>Agendamentos</PageSectionTitle>
+            <PageSectionTitle>Próximo Agendamento</PageSectionTitle>
             <BookingItem booking={confirmedBooking} />
           </PageSection>
         )}

@@ -108,13 +108,14 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
             {/* DIREITA - DATA */}
             <div className="border-border flex w-[110px] min-w-[110px] flex-col items-center justify-center border-l px-5 py-5">
-              <p className="text-muted-foreground text-sm capitalize">
-                {format(booking.date, "MMMM", { locale: ptBR })}
-              </p>
               <p className="text-foreground text-2xl leading-tight font-bold">
                 {format(booking.date, "dd")}
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground mb-1 text-sm capitalize">
+                {format(booking.date, "MMMM", { locale: ptBR })}
+              </p>
+
+              <p className="text-muted-foreground text-xs leading-tight">
                 {format(booking.date, "HH:mm")}
               </p>
             </div>
