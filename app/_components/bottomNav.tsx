@@ -3,7 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, Calendar, User, LogOut, LogInIcon } from "lucide-react";
+import {
+  Home,
+  Search,
+  Calendar,
+  User,
+  MessageSquare,
+  LogOut,
+  LogInIcon,
+} from "lucide-react";
 import {
   Sheet,
   SheetClose,
@@ -19,8 +27,9 @@ import EditUserDialog from "./edit-user-dialog";
 
 const navItems = [
   { label: "Início", href: "/", icon: Home },
-  { label: "Busca", href: "/busca", icon: Search },
+  { label: "Busca", href: "/barbershops", icon: Search },
   { label: "Agendamentos", href: "/bookings", icon: Calendar },
+  { label: "TrivoIA", href: "/chat", icon: MessageSquare },
 ];
 
 export default function BottomNav() {
@@ -45,25 +54,26 @@ export default function BottomNav() {
 
   return (
     <>
-      <nav className="fixed right-0 bottom-0 left-0 z-50 border-t border-gray-100 bg-black shadow-[0_-2px_10px_rgba(0,0,0,0.06)]">
-        <ul className="mx-auto flex h-16 max-w-lg items-center justify-around px-2">
-          {/* Links da barra inferior */}
+      {/* ── BARRA FIXA NAVEGAÇÃO IGUAL À FOTO ── */}
+      <nav className="fixed right-0 bottom-0 left-0 z-50 border-t border-zinc-800/80 bg-zinc-950/95 pt-2 pb-5 backdrop-blur-md">
+        <ul className="grid w-full grid-cols-5 items-center">
+          {/* 4 Primeiros itens */}
           {navItems.map(({ label, href, icon: Icon }) => {
             const isActive = pathname === href;
             return (
-              <li key={href} className="flex-1">
+              <li key={href} className="flex justify-center">
                 <Link
                   href={href}
-                  className={`flex flex-col items-center justify-center gap-1 rounded-xl py-2 transition-all ${
+                  className={`flex w-full flex-col items-center justify-center gap-1 transition-all ${
                     isActive
                       ? "text-white"
-                      : "text-gray-100 hover:text-gray-500"
+                      : "text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
-                  <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
+                  <Icon size={22} strokeWidth={isActive ? 2.2 : 1.8} />
                   <span
-                    className={`text-[11px] font-medium tracking-tight ${
-                      isActive ? "font-semibold" : ""
+                    className={`truncate text-[11px] font-medium ${
+                      isActive ? "font-bold text-white" : ""
                     }`}
                   >
                     {label}
@@ -73,16 +83,16 @@ export default function BottomNav() {
             );
           })}
 
-          {/* Botão de Perfil */}
-          <li className="flex-1">
+          {/* 5º item: Perfil (Abre a Gaveta) */}
+          <li className="flex justify-center">
             <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
               <SheetTrigger asChild>
-                <button className="flex w-full flex-col items-center justify-center gap-1 rounded-xl py-2 text-gray-100 transition-all hover:text-gray-500">
-                  <div className="relative">
+                <button className="flex w-full flex-col items-center justify-center gap-1 text-zinc-400 transition-all hover:text-zinc-200">
+                  <div className="relative flex items-center justify-center">
                     {session?.user ? (
-                      <Avatar className="h-6 w-6">
+                      <Avatar className="h-5 w-5 border border-zinc-700">
                         <AvatarImage src={session.user.image ?? ""} />
-                        <AvatarFallback className="text-[10px]">
+                        <AvatarFallback className="text-[9px]">
                           {session.user.name?.[0]}
                         </AvatarFallback>
                       </Avatar>
@@ -90,19 +100,19 @@ export default function BottomNav() {
                       <User size={22} strokeWidth={1.8} />
                     )}
                   </div>
-                  <span className="text-[11px] font-medium tracking-tight">
+                  <span className="truncate text-[11px] font-medium">
                     Perfil
                   </span>
                 </button>
               </SheetTrigger>
 
               <SheetContent className="overflow-y-auto [&::-webkit-scrollbar]:hidden">
-                <SheetHeader className="border-secondary border-b border-solid p-5 text-left">
+                <SheetHeader className="border-b border-zinc-800 p-5 text-left">
                   <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
 
-                {/* Topo do Menu: Usuário logado ou Botão de Login */}
-                <div className="flex items-center gap-3 border-solid px-3 py-3">
+                {/* Topo do Menu */}
+                <div className="flex items-center gap-3 border-b border-zinc-800 px-4 py-4">
                   {session?.user ? (
                     <>
                       <Avatar>
@@ -111,40 +121,38 @@ export default function BottomNav() {
                           {session.user.name?.[0]}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex flex-col">
-                        <p className="font-bold text-white">
+                      <div className="flex min-w-0 flex-col">
+                        <p className="truncate font-bold text-white">
                           {session.user.name}
                         </p>
-                        <p className="text-muted-foreground text-xs">
+                        <p className="text-muted-foreground truncate text-xs">
                           {session.user.email}
                         </p>
                       </div>
                     </>
                   ) : (
-                    <>
-                      <div className="flex-1">
-                        <h2 className="text-lg font-semibold">
-                          Olá. Faça seu login!
-                        </h2>
-                      </div>
+                    <div className="flex w-full items-center justify-between gap-2">
+                      <h2 className="text-sm font-semibold text-white">
+                        Olá. Faça seu login!
+                      </h2>
                       <Button
                         onClick={handleLogin}
-                        size="icon"
-                        className="rounded-full border px-13 py-3"
+                        size="sm"
+                        className="gap-2 rounded-xl bg-blue-600 font-bold hover:bg-blue-700"
                       >
                         Login
-                        <LogInIcon size={18} />
+                        <LogInIcon size={16} />
                       </Button>
-                    </>
+                    </div>
                   )}
                 </div>
 
-                {/* ── OPÇÕES DO MENU: Renderizadas APENAS quando logado ── */}
+                {/* Opções do Menu quando logado */}
                 {session?.user && (
-                  <div className="border-secondary flex flex-col gap-2 border-b border-solid px-3 py-5">
+                  <div className="flex flex-col gap-2 p-4">
                     <SheetClose asChild>
                       <Button
-                        className="justify-start gap-2"
+                        className="justify-start gap-2 text-sm font-bold text-white"
                         variant="ghost"
                         asChild
                       >
@@ -154,7 +162,7 @@ export default function BottomNav() {
 
                     <SheetClose asChild>
                       <Button
-                        className="justify-start gap-2"
+                        className="justify-start gap-2 text-sm font-bold text-white"
                         variant="ghost"
                         asChild
                       >
@@ -164,7 +172,7 @@ export default function BottomNav() {
 
                     <SheetClose asChild>
                       <Button
-                        className="justify-start gap-2"
+                        className="justify-start gap-2 text-sm font-bold text-white"
                         variant="ghost"
                         asChild
                       >
@@ -174,26 +182,26 @@ export default function BottomNav() {
 
                     <SheetClose asChild>
                       <Button
-                        className="justify-start gap-2"
+                        className="justify-start gap-2 text-sm font-bold text-white"
                         variant="ghost"
                         asChild
                       >
-                        <Link href="/avaliations">Avaliações</Link>
+                        <Link href="/my-reviews">Avaliações</Link>
                       </Button>
                     </SheetClose>
 
                     <Button
-                      className="justify-start gap-2 text-white"
+                      className="justify-start gap-2 text-sm font-bold text-white"
                       variant="ghost"
                       onClick={handleOpenEditProfile}
                     >
                       Editar Perfil
                     </Button>
 
-                    <div className="pt-2">
+                    <div className="mt-2 border-t border-zinc-800 pt-3">
                       <Button
                         variant="ghost"
-                        className="w-full justify-start gap-2 text-red-500 hover:bg-red-500/10 hover:text-red-500"
+                        className="w-full justify-start gap-2 text-sm font-bold text-red-500 hover:bg-red-500/10 hover:text-red-500"
                         onClick={handleLogout}
                       >
                         <LogOut size={18} />

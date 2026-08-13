@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import BarbershopItem from "./_components/barbershop-item";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { ChatButton } from "./_components/chat-button";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -113,7 +112,6 @@ const Home = async (props: HomeProps) => {
         </div>
       </div>
 
-      <ChatButton />
     </main>
   );
 };
