@@ -29,8 +29,7 @@ const FavoritesPage = async () => {
   return (
     <main className="bg-background flex min-h-screen w-full flex-col pb-24">
       {/* Topo Padronizado */}
-      <div className="bg-background/95 sticky top-0 z-20 px-5 pt-4 pb-2 backdrop-blur-sm">
-      </div>
+      <div className="bg-background/95 sticky top-0 z-20 px-5 pt-4 pb-2 backdrop-blur-sm"></div>
 
       {/* Conteúdo com Título Alinhado */}
       <div className="flex flex-col gap-5 px-5 pt-3">
@@ -43,9 +42,11 @@ const FavoritesPage = async () => {
             ))}
           </div>
         ) : (
-          <p className="text-sm text-zinc-400">
-            Você ainda não possui barbearias favoritadas.
-          </p>
+          <div className="flex flex-1 items-center justify-center py-20 text-center">
+            <p className="text-sm font-medium text-zinc-400">
+              Você ainda não possui barbearias favoritadas.
+            </p>
+          </div>
         )}
       </div>
     </main>
