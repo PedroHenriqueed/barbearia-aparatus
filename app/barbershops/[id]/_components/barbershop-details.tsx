@@ -182,7 +182,7 @@ export default function BarbershopDetails({
               </div>
               <Button
                 size="sm"
-                className="shrink-0 rounded-full px-4 text-xs font-bold"
+                className="shrink-0 rounded-full bg-white px-4 text-xs font-bold text-black hover:bg-[#ffffff]/70"
                 onClick={() => copyToClipboard(phone)}
               >
                 Copiar
@@ -221,10 +221,7 @@ export default function BarbershopDetails({
                   </div>
 
                   <div className="flex items-center gap-1">
-                    <StarIcon
-                      size={14}
-                      className="fill-yellow-400 text-yellow-400"
-                    />
+                    <StarIcon size={14} className="fill-white text-white" />
                     <span className="text-xs font-bold text-white">
                       {review.rating}
                     </span>

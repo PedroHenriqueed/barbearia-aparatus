@@ -249,7 +249,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
             >
               <SheetTrigger asChild>
                 <Button
-                  className="shrink-0 rounded-full bg-[#1546A1] px-4 text-xs font-bold text-white hover:bg-[#1546A1]/90"
+                  className="shrink-0 rounded-full bg-[#ffffff] px-4 text-xs font-bold text-black hover:bg-[#ffffff]/70"
                   size="sm"
                 >
                   Reservar
