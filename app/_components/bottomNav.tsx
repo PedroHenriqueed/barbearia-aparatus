@@ -27,7 +27,7 @@ import EditUserDialog from "./edit-user-dialog";
 
 const navItems = [
   { label: "Início", href: "/", icon: Home },
-  { label: "Busca", href: "/barbershops", icon: Search },
+  { label: "Busca", href: "/busca", icon: Search },
   { label: "Agendamentos", href: "/bookings", icon: Calendar },
   { label: "TrivoIA", href: "/chats", icon: MessageSquare },
 ];
