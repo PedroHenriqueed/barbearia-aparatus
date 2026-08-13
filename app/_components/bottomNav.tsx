@@ -29,7 +29,7 @@ const navItems = [
   { label: "Início", href: "/", icon: Home },
   { label: "Busca", href: "/barbershops", icon: Search },
   { label: "Agendamentos", href: "/bookings", icon: Calendar },
-  { label: "TrivoIA", href: "/chat", icon: MessageSquare },
+  { label: "TrivoIA", href: "/chats", icon: MessageSquare },
 ];
 
 export default function BottomNav() {
