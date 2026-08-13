@@ -11,6 +11,7 @@ import {
   LogOut,
   LogInIcon,
   Heart,
+  Star,
 } from "lucide-react";
 import {
   Sheet,
@@ -25,14 +26,6 @@ import { Button } from "./ui/button";
 import { authClient } from "@/lib/auth-client";
 import EditUserDialog from "./edit-user-dialog";
 
-const quickSearchOptions = [
-  { title: "Cabelo" },
-  { title: "Barba" },
-  { title: "Acabamento" },
-  { title: "Sobrancelha" },
-  { title: "Massagem" },
-  { title: "Hidratação" },
-];
 
 const navItems = [
   { label: "Início", href: "/", icon: Home },
@@ -72,11 +65,10 @@ export default function BottomNav() {
               <li key={href} className="flex-1">
                 <Link
                   href={href}
-                  className={`flex flex-col items-center justify-center gap-1 rounded-xl py-2 transition-all ${
-                    isActive
+                  className={`flex flex-col items-center justify-center gap-1 rounded-xl py-2 transition-all ${isActive
                       ? "text-white"
                       : "text-gray-100 hover:text-gray-500"
-                  }`}
+                    }`}
                 >
                   <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
                   <span
@@ -195,70 +187,69 @@ export default function BottomNav() {
                       </Button>
                     </SheetClose>
                   )}
-
-                  {/* Botão de Editar Perfil */}
-                  {session?.user && (
-                    <Button
-                      className="justify-start gap-2 text-white"
-                      variant="ghost"
-                      onClick={handleOpenEditProfile}
-                    >
-                      <User size={18} />
-                      Editar Perfil
-                    </Button>
-                  )}
-                </div>
-
-                {/* Categorias */}
-                <div className="border-secondary flex flex-col gap-3 border-b border-solid px-3 py-5">
-                  {quickSearchOptions.map((option) => (
-                    <SheetClose key={option.title} asChild>
+                    <SheetClose asChild>
                       <Button
                         className="justify-start gap-2"
                         variant="ghost"
                         asChild
                       >
-                        <Link href={`/barbershops?search=${option.title}`}>
-                          {option.title}
-                        </Link>
-                      </Button>
-                    </SheetClose>
-                  ))}
-                </div>
+                  <Link href="/avaliations">
+                    <Star size={18} />
+                    Avaliações
+                  </Link>
+                </Button>
+              </SheetClose>
+                 
 
-                {/* Logout */}
-                {session?.user && (
-                  <div className="flex flex-col gap-2 px-3 py-5">
-                    <Button
-                      variant="ghost"
-                      className="justify-start gap-2"
-                      onClick={handleLogout}
-                    >
-                      <LogOut size={18} />
-                      Sair da conta
-                    </Button>
-                  </div>
-                )}
-              </SheetContent>
-            </Sheet>
-          </li>
-        </ul>
-      </nav>
+              {/* Botão de Editar Perfil */}
+              {session?.user && (
+                <Button
+                  className="justify-start gap-2 text-white"
+                  variant="ghost"
+                  onClick={handleOpenEditProfile}
+                >
+                  <User size={18} />
+                  Editar Perfil
+                </Button>
+              )}
+            </div>
 
-      {/* Modal de Edição de Perfil */}
-      {session?.user && (
-        <EditUserDialog
-          user={{
-            id: session.user.id,
-            name: session.user.name || "",
-            email: session.user.email || "",
-            image: session.user.image,
-            phone: (session.user as any).phone,
-          }}
-          open={isEditProfileOpen}
-          onOpenChange={setIsEditProfileOpen}
-        />
-      )}
+
+            {/* Logout */}
+            {session?.user && (
+              <div className="flex flex-col gap-2 px-3 py-5">
+                <Button
+                  variant="ghost"
+                  className="justify-start gap-2"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={18} />
+                  Sair da conta
+                </Button>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
+      </li>
+    </ul >
+      </nav >
+
+    {/* Modal de Edição de Perfil */ }
+  {
+    session?.user && (
+      <EditUserDialog
+        user={{
+          id: session.user.id,
+          name: session.user.name || "",
+          email: session.user.email || "",
+          image: session.user.image,
+          phone: (session.user as any).phone,
+        }}
+        open={isEditProfileOpen}
+        onOpenChange={setIsEditProfileOpen}
+      />
+    )
+  }
     </>
   );
 }

@@ -57,7 +57,6 @@ const BookingsPage = async () => {
       <Header />
 
       <div className="flex flex-col gap-6 p-5">
-        <h1 className="text-xl font-bold">Agendamentos</h1>
 
         {/* 1. Agendamentos Confirmados (Futuros) */}
         {confirmedBookings.length > 0 && (
