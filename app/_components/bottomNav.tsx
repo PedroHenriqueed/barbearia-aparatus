@@ -188,7 +188,7 @@ export default function BottomNav() {
                         variant="ghost"
                         asChild
                       >
-                        <Link href="/my-reviews">Avaliações</Link>
+                        <Link href="/avaliations">Avaliações</Link>
                       </Button>
                     </SheetClose>
 
