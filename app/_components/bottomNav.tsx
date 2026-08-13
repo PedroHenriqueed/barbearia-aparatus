@@ -156,7 +156,7 @@ export default function BottomNav() {
                       asChild
                     >
                       <Link href="/">
-                        <Home size={18} />
+                        
                         Início
                       </Link>
                     </Button>
@@ -168,7 +168,7 @@ export default function BottomNav() {
                       asChild
                     >
                       <Link href="/bookings">
-                        <Calendar size={18} />
+                      
                         Agendamentos
                       </Link>
                     </Button>
@@ -181,7 +181,7 @@ export default function BottomNav() {
                         asChild
                       >
                         <Link href="/favorites">
-                          <Heart size={18} />
+                      
                           Favoritos
                         </Link>
                       </Button>
@@ -194,7 +194,7 @@ export default function BottomNav() {
                         asChild
                       >
                   <Link href="/avaliations">
-                    <Star size={18} />
+                  
                     Avaliações
                   </Link>
                 </Button>
@@ -208,7 +208,7 @@ export default function BottomNav() {
                   variant="ghost"
                   onClick={handleOpenEditProfile}
                 >
-                  <User size={18} />
+             
                   Editar Perfil
                 </Button>
               )}
