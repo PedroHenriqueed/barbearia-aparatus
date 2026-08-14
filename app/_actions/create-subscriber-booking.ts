@@ -47,6 +47,7 @@ export const createSubscriberBooking = actionClient
       throw new Error("Nenhuma assinatura ativa encontrada nesta barbearia.");
     }
 
+    
     // Cria o agendamento já marcado como PAGO via assinatura
     await prisma.booking.create({
       data: {
