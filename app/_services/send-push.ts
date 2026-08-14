@@ -1,12 +1,6 @@
 import webpush from "web-push";
 import { prisma } from "@/lib/prisma";
 
-webpush.setVapidDetails(
-  "mailto:seu-email@dominio.com",
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!,
-);
-
 export async function sendRealPushNotification({
   userId,
   title,
@@ -18,6 +12,23 @@ export async function sendRealPushNotification({
   message: string;
   url?: string;
 }) {
+  const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const privateKey = process.env.VAPID_PRIVATE_KEY;
+
+  // 🛡️ Evita erro de build/execução se as chaves não estiverem no .env
+  if (!publicKey || !privateKey) {
+    console.warn(
+      "⚠️ Chaves VAPID ausentes no .env. Notificação push ignorada.",
+    );
+    return;
+  }
+
+  webpush.setVapidDetails(
+    process.env.VAPID_MAILTO || "mailto:seu-email@dominio.com",
+    publicKey,
+    privateKey,
+  );
+
   const subscriptions = await prisma.pushSubscription.findMany({
     where: { userId },
   });
