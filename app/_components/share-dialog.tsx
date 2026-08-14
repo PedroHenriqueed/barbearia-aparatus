@@ -37,7 +37,7 @@ export function ShareDialog({ barbershopName }: ShareDialogProps) {
   const handleWhatsAppShare = () => {
     const url = getShareUrl();
     const text = encodeURIComponent(
-      `Agende seu horário na ${barbershopName}! ✂️\n${url}`,
+      `Agende seu horário na ${barbershopName}! \n${url}`,
     );
     window.open(`https://api.whatsapp.com/send?text=${text}`, "_blank");
   };

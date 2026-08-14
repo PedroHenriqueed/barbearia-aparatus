@@ -93,7 +93,7 @@ async function handleShare() {
     if (isMobile && navigator.share) {
       await navigator.share({
         title: barbershop.name,
-        text: `Agende seu horário na ${barbershop.name}! ✂️`,
+        text: `Agende seu horário na ${barbershop.name}! `,
         url,
       });
     } else {
