@@ -7,7 +7,7 @@ import {
   AvatarFallback,
   AvatarImage,
 } from "@/app/_components/ui/avatar";
-import { ArrowLeft, Heart, StarIcon } from "lucide-react";
+import { ArrowLeft, Heart, StarIcon, Share } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
@@ -21,6 +21,8 @@ import {
 } from "@prisma/client";
 import ReviewDialog from "@/app/_components/review";
 import PlanItem from "./plan-item";
+import { toast } from "sonner";
+import { ShareDialog } from "@/app/_components/share-dialog";
 
 type ReviewWithUser = Review & {
   user: User;
@@ -80,6 +82,38 @@ export default function BarbershopDetails({
     }
   }
 
+async function handleShare() {
+  const url = window.location.href;
+
+  // Detecta se o usuário está num dispositivo móvel (Android, iOS)
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+
+  try {
+    // Se for celular e suportar compartilhamento, abre a gaveta nativa
+    if (isMobile && navigator.share) {
+      await navigator.share({
+        title: barbershop.name,
+        text: `Agende seu horário na ${barbershop.name}! ✂️`,
+        url,
+      });
+    } else {
+      // Se for PC, pula a janela quebrada do Windows e copia direto
+      await navigator.clipboard.writeText(url);
+      toast.success("Link da barbearia copiado!");
+    }
+  } catch (error: any) {
+    // Se o usuário fechar a gaveta no celular, não fazemos nada
+    if (error.name === "AbortError") return;
+
+    // Fallback de segurança para qualquer outro erro
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link da barbearia copiado!");
+    } catch {
+      toast.error("Erro ao copiar o link.");
+    }
+  }
+}
   return (
     <div className="bg-background min-h-screen w-full max-w-full overflow-x-hidden pb-20">
       {/* BANNER / HEADER */}
@@ -113,26 +147,32 @@ export default function BarbershopDetails({
               </p>
             </div>
 
-            {/* BOTÃO FAVORITO */}
-            <Button
-              variant="ghost"
-              size="icon"
-              disabled={isLoading}
-              onClick={toggleFavorite}
-              className={`shrink-0 rounded-full text-white transition-all hover:bg-white/10 ${
-                isLoading ? "opacity-50" : ""
-              }`}
-              aria-label={
-                isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"
-              }
-            >
-              <Heart
-                className="h-6 w-6"
-                fill={isFavorite ? "white" : "none"}
-                stroke="white"
-                strokeWidth={2}
-              />
-            </Button>
+            <div className="flex items-center gap-1">
+              <ShareDialog barbershopName={barbershop.name} />
+              {/* BOTÃO FAVORITO */}
+              <Button
+                variant="ghost"
+                size="icon"
+                disabled={isLoading}
+                onClick={toggleFavorite}
+                className={`shrink-0 rounded-full text-white transition-all hover:bg-white/10 ${
+                  isLoading ? "opacity-50" : ""
+                }`}
+                aria-label={
+                  isFavorite
+                    ? "Remover dos favoritos"
+                    : "Adicionar aos favoritos"
+                }
+              >
+                <Heart
+                  className="h-6 w-6"
+                  fill={isFavorite ? "white" : "none"}
+                  stroke="white"
+                  strokeWidth={2}
+                />
+              </Button>
+
+            </div>
           </div>
 
           {/* NOTAS DINÂMICAS E BOTÃO DE AVALIAR */}

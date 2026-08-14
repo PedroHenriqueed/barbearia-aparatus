@@ -52,6 +52,7 @@ model Barbershop {
   reviews     Review[]
   waitlists   Waitlist[]
   plans Plan[]
+  slug        String?  @unique
 }
 
 model BarbershopService {
