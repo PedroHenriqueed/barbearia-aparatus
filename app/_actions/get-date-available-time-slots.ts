@@ -1,7 +1,6 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
-import { endOfDay, startOfDay, format } from "date-fns";
 
 export interface TimeSlot {
   time: string;
@@ -11,6 +10,24 @@ export interface TimeSlot {
   waitlistCount: number;
 }
 
+// 🛡️ Converte qualquer data/horário do servidor (UTC) para o fuso oficial do Brasil
+const getBrazilDateInfo = (dateInput: Date | string) => {
+  const d = new Date(dateInput);
+  const brString = d.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" });
+  const brDate = new Date(brString);
+
+  const year = brDate.getFullYear();
+  const month = String(brDate.getMonth() + 1).padStart(2, "0");
+  const day = String(brDate.getDate()).padStart(2, "0");
+  const hours = String(brDate.getHours()).padStart(2, "0");
+  const minutes = String(brDate.getMinutes()).padStart(2, "0");
+
+  return {
+    dateStr: `${year}-${month}-${day}`,
+    timeStr: `${hours}:${minutes}`,
+  };
+};
+
 export const getDateAvailableTimeSlots = async ({
   babershopId,
   date,
@@ -18,30 +35,48 @@ export const getDateAvailableTimeSlots = async ({
   babershopId: string;
   date: Date | string;
 }): Promise<TimeSlot[]> => {
-  const dateObj = new Date(date);
+  const targetBR = getBrazilDateInfo(date);
 
-  // 1. Busca os agendamentos ativos do dia
-  const bookings = await prisma.booking.findMany({
-    where: {
-      babershopId: babershopId,
-      date: {
-        gte: startOfDay(dateObj),
-        lte: endOfDay(dateObj),
+  // Busca agendamentos em um intervalo amplo para cobrir diferenças de fuso
+  const inputDateObj = new Date(date);
+  const startRange = new Date(inputDateObj);
+  startRange.setDate(startRange.getDate() - 2);
+  const endRange = new Date(inputDateObj);
+  endRange.setDate(endRange.getDate() + 2);
+
+  const [bookings, waitlists] = await Promise.all([
+    prisma.booking.findMany({
+      where: {
+        babershopId,
+        date: { gte: startRange, lte: endRange },
+        cancelled: false,
       },
-      cancelled: false,
-    },
+    }),
+    prisma.waitlist.findMany({
+      where: {
+        barbershopId: babershopId,
+        date: { gte: startRange, lte: endRange },
+        status: { in: ["WAITING", "NOTIFIED"] },
+      },
+    }),
+  ]);
+
+  // Mapeia os horários ocupados convertidos para o fuso do Brasil
+  const bookedTimes = new Set<string>();
+  bookings.forEach((b) => {
+    const bBR = getBrazilDateInfo(b.date);
+    if (bBR.dateStr === targetBR.dateStr) {
+      bookedTimes.add(bBR.timeStr);
+    }
   });
 
-  // 2. Busca as solicitações ativas de Fila de Espera do dia
-  const waitlists = await prisma.waitlist.findMany({
-    where: {
-      barbershopId: babershopId,
-      date: {
-        gte: startOfDay(dateObj),
-        lte: endOfDay(dateObj),
-      },
-      status: { in: ["WAITING", "NOTIFIED"] },
-    },
+  // Mapeia as filas de espera
+  const waitlistTimes: string[] = [];
+  waitlists.forEach((w) => {
+    const wBR = getBrazilDateInfo(w.date);
+    if (wBR.dateStr === targetBR.dateStr) {
+      waitlistTimes.push(wBR.timeStr);
+    }
   });
 
   const timeSlots = [
@@ -66,35 +101,20 @@ export const getDateAvailableTimeSlots = async ({
     "18:00",
   ];
 
-  const now = new Date();
+  const nowBR = getBrazilDateInfo(new Date());
 
-  // Mapeia os horários já reservados no formato "HH:mm"
-  const bookedTimes = new Set(
-    bookings.map((booking) => format(new Date(booking.date), "HH:mm")),
-  );
-
-  // Mapeia os horários com fila de espera no formato "HH:mm"
-  const waitlistTimes = waitlists.map((w) => format(new Date(w.date), "HH:mm"));
-
-  // 3. Mapeia cada horário com seu status correto
   return timeSlots.map((time) => {
     const [hour, minute] = time.split(":").map(Number);
 
-    // Verifica se o horário está agendado no banco
+    // Marca como ocupado se o horário do Brasil bater com a reserva
     const isBooked = bookedTimes.has(time);
 
-    // Verifica se o horário já passou no dia de hoje
-    const slotDate = new Date(dateObj);
-    slotDate.setHours(hour, minute, 0, 0);
+    // Verifica se já passou hoje no Brasil
+    const isToday = nowBR.dateStr === targetBR.dateStr;
+    const [nowH, nowM] = nowBR.timeStr.split(":").map(Number);
+    const isPast =
+      isToday && (nowH > hour || (nowH === hour && nowM >= minute));
 
-    const isToday =
-      now.getDate() === slotDate.getDate() &&
-      now.getMonth() === slotDate.getMonth() &&
-      now.getFullYear() === slotDate.getFullYear();
-
-    const isPast = isToday && now > slotDate;
-
-    // Conta quantas pessoas estão na fila para este horário
     const waitlistCount = waitlistTimes.filter(
       (wTime) => wTime === time,
     ).length;
