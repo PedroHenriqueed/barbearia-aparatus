@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
-import { PaymentMethod, PaymentStatus } from "@prisma/client";
+import {
+  PaymentMethod,
+  PaymentStatus,
+  SubscriptionStatus,
+} from "@prisma/client";
 import { sendRealPushNotification } from "@/app/_services/send-push";
 
 export const dynamic = "force-dynamic";
@@ -32,43 +36,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
+  try {
+    // 1. PROCESSA AGENDAMENTOS AVULSOS
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
 
-    const serviceId = session.metadata?.serviceId;
-    const barbershopId = session.metadata?.barbershopId;
-    const userId = session.metadata?.userId;
-    const date = session.metadata?.date;
+      const serviceId = session.metadata?.serviceId;
+      const barbershopId = session.metadata?.barbershopId;
+      const userId = session.metadata?.userId;
+      const date = session.metadata?.date;
 
-    if (serviceId && barbershopId && userId && date) {
-      try {
-        // 🔒 CHECAGEM 1: Já existe booking com essa sessão do Stripe?
+      if (serviceId && barbershopId && userId && date) {
         const existingBySession = await prisma.booking.findFirst({
           where: { stripeSessionId: session.id },
         });
 
         if (existingBySession) {
-          console.log(
-            "⚠️ Evento duplicado ignorado (session.id já processado).",
-          );
           return NextResponse.json({ received: true });
         }
 
         const paymentId = (session.payment_intent as string) || session.id;
 
-        // 🔒 CHECAGEM 2: Já existe booking com esse paymentId?
-        const existingByPayment = await prisma.booking.findFirst({
-          where: { paymentId: paymentId },
-        });
-
-        if (existingByPayment) {
-          console.log(
-            "⚠️ Evento duplicado ignorado (paymentId já processado).",
-          );
-          return NextResponse.json({ received: true });
-        }
-
-        // 1. Criação da reserva no banco de dados (incluindo dados do serviço e barbearia para o texto da notificação)
         const newBooking = await prisma.booking.create({
           data: {
             date: new Date(date),
@@ -76,15 +64,9 @@ export async function POST(request: Request) {
             stripeSessionId: session.id,
             paymentMethod: PaymentMethod.ONLINE,
             paymentStatus: PaymentStatus.PAID,
-            user: {
-              connect: { id: userId },
-            },
-            service: {
-              connect: { id: serviceId },
-            },
-            barbershop: {
-              connect: { id: barbershopId },
-            },
+            user: { connect: { id: userId } },
+            service: { connect: { id: serviceId } },
+            barbershop: { connect: { id: barbershopId } },
           },
           include: {
             service: true,
@@ -92,12 +74,9 @@ export async function POST(request: Request) {
           },
         });
 
-        console.log("✅ Reserva criada com sucesso! Session ID:", session.id);
-
         const notificationTitle = "Pagamento e Agendamento Confirmados! 💳";
         const notificationMessage = `Sua reserva para ${newBooking.service.name} na ${newBooking.barbershop.name} foi confirmada.`;
 
-        // 2. Salva a notificação no banco de dados (para a gaveta de notificações do app)
         await prisma.notification.create({
           data: {
             userId,
@@ -107,28 +86,83 @@ export async function POST(request: Request) {
           },
         });
 
-        // 3. Envia o Push real no dispositivo/computador do usuário
         await sendRealPushNotification({
           userId,
           title: notificationTitle,
           message: notificationMessage,
           url: "/bookings",
         });
-      } catch (dbError: any) {
-        console.error("❌ ERRO AO SALVAR RESERVA NO BANCO (Webhook):", dbError);
-        return NextResponse.json(
-          { error: "Erro no banco de dados" },
-          { status: 500 },
-        );
       }
-    } else {
-      console.error("❌ Faltam dados no metadata do Stripe:", {
-        serviceId,
-        barbershopId,
-        userId,
-        date,
+    }
+
+    // 2. PROCESSA CRIAÇÃO E RENOVAÇÃO DE ASSINATURAS
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated"
+    ) {
+      const subscription = event.data.object as Stripe.Subscription;
+      const stripeCustomerId = subscription.customer as string;
+      const stripePriceId = subscription.items.data[0]?.price?.id;
+
+      if (stripePriceId) {
+        const plan = await prisma.plan.findUnique({
+          where: { stripePriceId },
+        });
+
+        if (plan) {
+          const userId = subscription.metadata?.userId;
+
+          if (userId) {
+            let status: SubscriptionStatus = SubscriptionStatus.ACTIVE;
+            if (subscription.status === "canceled")
+              status = SubscriptionStatus.CANCELED;
+            if (subscription.status === "past_due")
+              status = SubscriptionStatus.PAST_DUE;
+            if (subscription.status === "incomplete")
+              status = SubscriptionStatus.INCOMPLETE;
+
+            // Garante uma data válida para a renovação
+            const periodEndTimestamp = (subscription as any).current_period_end;
+            const periodEndDate = periodEndTimestamp
+              ? new Date(periodEndTimestamp * 1000)
+              : new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+            await prisma.subscription.upsert({
+              where: { stripeSubscriptionId: subscription.id },
+              update: {
+                status,
+                currentPeriodEnd: periodEndDate,
+              },
+              create: {
+                userId,
+                planId: plan.id,
+                stripeSubscriptionId: subscription.id,
+                stripeCustomerId,
+                status,
+                currentPeriodEnd: periodEndDate,
+              },
+            });
+
+            console.log("✅ Assinatura gravada no banco de dados com sucesso!");
+          } else {
+            console.error("⚠️ userId ausente no metadata da assinatura.");
+          }
+        }
+      }
+    }
+
+    // 3. PROCESSA CANCELAMENTO DE ASSINATURAS
+    if (event.type === "customer.subscription.deleted") {
+      const subscription = event.data.object as Stripe.Subscription;
+
+      await prisma.subscription.update({
+        where: { stripeSubscriptionId: subscription.id },
+        data: { status: SubscriptionStatus.CANCELED },
       });
     }
+  } catch (error: any) {
+    console.error("❌ ERRO INTERNO NO WEBHOOK:", error.message);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });

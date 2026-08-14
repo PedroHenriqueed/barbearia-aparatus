@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Barbershop, BarbershopService } from "@prisma/client";
@@ -15,6 +15,7 @@ import {
   CreditCard,
   Wallet,
   Calendar1,
+  Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/app/_components/ui/button";
@@ -38,14 +39,23 @@ import {
 } from "@/app/_components/ui/alert-dialog";
 
 import { createBookingCheckoutSession } from "@/app/_actions/create-booking-checkout-session";
-import { getDateAvailableTimeSlots } from "@/app/_actions/get-date-available-time-slots";
+import {
+  getDateAvailableTimeSlots,
+  TimeSlot,
+} from "@/app/_actions/get-date-available-time-slots";
 import { createInPersonBooking } from "@/app/_actions/create-booking";
+import { joinWaitlist } from "@/app/_actions/join-waitlist";
+import { checkUserSubscription } from "@/app/_actions/check-subscription";
+import { createSubscriberBooking } from "@/app/_actions/create-subscriber-booking";
 import { authClient } from "@/lib/auth-client";
 import { generateGoogleCalendarUrl } from "@/lib/utils";
 
 interface ServiceItemProps {
   service: BarbershopService;
-  barbershop: Pick<Barbershop, "name" | "imageUrl" | "address" | "phones">;
+  barbershop: Pick<
+    Barbershop,
+    "id" | "name" | "imageUrl" | "address" | "phones"
+  >;
 }
 
 export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
@@ -58,7 +68,6 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [calendarUrl, setCalendarUrl] = useState<string>("");
 
-  // 🔹 Inicializa o estado diretamente com a verificação da URL (sem useEffect)
   const [sheetIsOpen, setSheetIsOpen] = useState(serviceIdParam === service.id);
 
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
@@ -72,7 +81,14 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
 
   const { data: session } = authClient.useSession();
 
-  // Busca horários disponíveis
+  // 1. Checa se o usuário possui assinatura ativa nesta barbearia
+  const { data: isSubscribed } = useQuery({
+    queryKey: ["user-subscription", service.babershopId, session?.user?.id],
+    queryFn: () => checkUserSubscription({ barbershopId: service.babershopId }),
+    enabled: !!session?.user?.id && !!service.babershopId,
+  });
+
+  // Busca horários disponíveis e ocupados
   const { data: availableTimesSlots, isFetching } = useQuery({
     queryKey: ["date-available-time-slots", service.babershopId, date],
     queryFn: () =>
@@ -127,8 +143,62 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
       },
     });
 
-  const isPending = isOnlinePending || isInPersonPending;
-  const timeList: string[] = availableTimesSlots || [];
+  // Action 3: Agendamento Gratuito via Assinatura
+  const {
+    executeAsync: executeSubscriberBooking,
+    isPending: isSubscriberPending,
+  } = useAction(createSubscriberBooking, {
+    onSuccess: () => {
+      toast.success("Agendamento realizado com sucesso pelo seu Plano!");
+      queryClient.invalidateQueries({
+        queryKey: ["date-available-time-slots", service.babershopId, date],
+      });
+
+      if (date && selectedTime) {
+        const [hour, minute] = selectedTime.split(":").map(Number);
+        const bookingDate = set(date, { hours: hour, minutes: minute });
+        const url = generateGoogleCalendarUrl({
+          title: `${service.name} - ${barbershop.name}`,
+          description: `Serviço: ${service.name}\nBarbearia: ${barbershop.name}`,
+          location: barbershop.address,
+          startDate: bookingDate,
+        });
+        setCalendarUrl(url);
+      }
+
+      setSheetIsOpen(false);
+      setShowSuccessDialog(true);
+    },
+    onError: ({ error }) => {
+      toast.error(
+        error.serverError || "Erro ao realizar agendamento pelo plano.",
+      );
+    },
+  });
+
+  // Action 4: Ativar Notificação "Avise-me"
+  const { executeAsync: executeJoinWaitlist, isPending: isWaitlistPending } =
+    useAction(joinWaitlist, {
+      onSuccess: ({ data }) => {
+        if (data?.success) {
+          toast.success("Te avisaremos se este horário vagar! 🔔");
+          queryClient.invalidateQueries({
+            queryKey: ["date-available-time-slots", service.babershopId, date],
+          });
+        }
+      },
+      onError: ({ error }) => {
+        toast.error(error.serverError || "Erro ao ativar o aviso.");
+      },
+    });
+
+  const isPending =
+    isOnlinePending ||
+    isInPersonPending ||
+    isWaitlistPending ||
+    isSubscriberPending;
+
+  const timeList: TimeSlot[] = availableTimesSlots || [];
 
   const calendarDays = useMemo(() => {
     const year = currentMonth.getFullYear();
@@ -183,6 +253,15 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
     const [hour, minute] = selectedTime.split(":").map(Number);
     const bookingDate = set(date, { hours: hour, minutes: minute });
 
+    // Se for assinante, cria a reserva de graça
+    if (isSubscribed) {
+      await executeSubscriberBooking({
+        serviceId: service.id,
+        date: bookingDate,
+      });
+      return;
+    }
+
     if (paymentMethod === "ONLINE") {
       await executeOnlineBooking({ serviceId: service.id, date: bookingDate });
     } else {
@@ -191,6 +270,31 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
         date: bookingDate,
       });
     }
+  };
+
+  const handleJoinWaitlistClick = async (slotTime: string) => {
+    if (!session?.user) {
+      toast.error("Você precisa fazer login para ativar o aviso!");
+      await authClient.signIn.social({ provider: "google" });
+      return;
+    }
+
+    if (!date) return;
+
+    const [hour, minute] = slotTime.split(":").map(Number);
+
+    const waitlistDate = set(date, {
+      hours: hour,
+      minutes: minute,
+      seconds: 0,
+      milliseconds: 0,
+    });
+
+    await executeJoinWaitlist({
+      barbershopId: service.babershopId,
+      serviceId: service.id,
+      date: waitlistDate,
+    });
   };
 
   const handleCloseSuccessDialog = () => {
@@ -236,12 +340,19 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
           </p>
 
           <div className="mt-3 flex w-full items-center justify-between gap-2">
-            <span className="text-foreground shrink-0 text-sm font-bold">
-              {Intl.NumberFormat("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-              }).format(Number(service.priceInCents) / 100)}
-            </span>
+            {/* Exibição do Preço (Ajustada para Assinantes) */}
+            {isSubscribed ? (
+              <span className="flex items-center gap-1 rounded-full border border-zinc-500/30 px-2.5 py-1 text-xs font-bold text-foreground">
+             Plano VIP
+              </span>
+            ) : (
+              <span className="text-foreground shrink-0 text-sm font-bold">
+                {Intl.NumberFormat("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                }).format(Number(service.priceInCents) / 100)}
+              </span>
+            )}
 
             <Sheet
               open={sheetIsOpen}
@@ -344,7 +455,7 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                     </div>
                   </div>
 
-                  {/* Horários */}
+                  {/* Horários e Alerta "Avise-me" */}
                   {date && (
                     <div className="mb-6">
                       <div className="flex gap-3 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
@@ -355,19 +466,51 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                             </span>
                           </div>
                         ) : timeList.length > 0 ? (
-                          timeList.map((time) => (
-                            <button
-                              key={time}
-                              onClick={() => setSelectedTime(time)}
-                              className={`rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-all ${
-                                selectedTime === time
-                                  ? "border-primary bg-primary text-primary-foreground"
-                                  : "border-border text-muted-foreground hover:bg-secondary bg-transparent"
-                              }`}
-                            >
-                              {time}
-                            </button>
-                          ))
+                          timeList.map((slot) => {
+                            if (slot.available) {
+                              return (
+                                <button
+                                  key={slot.time}
+                                  type="button"
+                                  onClick={() => setSelectedTime(slot.time)}
+                                  className={`rounded-full border px-4 py-2 text-sm font-medium whitespace-nowrap transition-all ${
+                                    selectedTime === slot.time
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border text-muted-foreground hover:bg-secondary bg-transparent"
+                                  }`}
+                                >
+                                  {slot.time}
+                                </button>
+                              );
+                            }
+
+                            if (slot.isBooked) {
+                              return (
+                                <button
+                                  key={slot.time}
+                                  type="button"
+                                  disabled={isWaitlistPending}
+                                  onClick={() =>
+                                    handleJoinWaitlistClick(slot.time)
+                                  }
+                                  className="rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-medium whitespace-nowrap text-amber-400 transition-all hover:bg-amber-500/20 active:scale-95"
+                                >
+                                  {slot.time} • Avise-me
+                                </button>
+                              );
+                            }
+
+                            return (
+                              <button
+                                key={slot.time}
+                                type="button"
+                                disabled
+                                className="border-border/30 text-muted-foreground/30 cursor-not-allowed rounded-full border bg-transparent px-4 py-2 text-sm font-medium whitespace-nowrap opacity-40"
+                              >
+                                {slot.time}
+                              </button>
+                            );
+                          })
                         ) : (
                           <div className="flex w-full items-center justify-center p-4">
                             <span className="text-muted-foreground text-xs">
@@ -379,42 +522,57 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                     </div>
                   )}
 
-                  {/* Forma de Pagamento */}
-                  {selectedTime && date && (
-                    <div className="mb-6 flex flex-col gap-3">
-                      <h3 className="text-foreground text-base font-bold">
-                        Forma de Pagamento
-                      </h3>
-
-                      <div className="grid grid-cols-2 gap-3">
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod("IN_PERSON")}
-                          className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all ${
-                            paymentMethod === "IN_PERSON"
-                              ? "border-primary bg-primary/10 text-primary font-bold"
-                              : "border-border text-muted-foreground hover:bg-secondary"
-                          }`}
-                        >
-                          <Wallet className="h-5 w-5" />
-                          <span className="text-xs">Pagar na Barbearia</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setPaymentMethod("ONLINE")}
-                          className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all ${
-                            paymentMethod === "ONLINE"
-                              ? "border-primary bg-primary/10 text-primary font-bold"
-                              : "border-border text-muted-foreground hover:bg-secondary"
-                          }`}
-                        >
-                          <CreditCard className="h-5 w-5" />
-                          <span className="text-xs">Pagar Agora Online</span>
-                        </button>
+                  {/* Forma de Pagamento / Banner de Assinante */}
+                  {selectedTime &&
+                    date &&
+                    (isSubscribed ? (
+                      <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-amber-400">
+                        <Sparkles className="h-6 w-6 shrink-0 text-amber-400" />
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold">
+                            Assinatura Ativa
+                          </span>
+                          <span className="text-xs text-amber-300/80">
+                            Este agendamento é coberto pelo seu plano e não terá
+                            custo adicional.
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : (
+                      <div className="mb-6 flex flex-col gap-3">
+                        <h3 className="text-foreground text-base font-bold">
+                          Forma de Pagamento
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("IN_PERSON")}
+                            className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all ${
+                              paymentMethod === "IN_PERSON"
+                                ? "border-primary bg-primary/10 text-primary font-bold"
+                                : "border-border text-muted-foreground hover:bg-secondary"
+                            }`}
+                          >
+                            <Wallet className="h-5 w-5" />
+                            <span className="text-xs">Pagar na Barbearia</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("ONLINE")}
+                            className={`flex flex-col items-center justify-center gap-2 rounded-xl border p-4 text-center transition-all ${
+                              paymentMethod === "ONLINE"
+                                ? "border-primary bg-primary/10 text-primary font-bold"
+                                : "border-border text-muted-foreground hover:bg-secondary"
+                            }`}
+                          >
+                            <CreditCard className="h-5 w-5" />
+                            <span className="text-xs">Pagar Agora Online</span>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
 
                   {/* Resumo do Pedido */}
                   {selectedTime && date && (
@@ -424,11 +582,15 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                           <h3 className="text-foreground text-base font-bold">
                             {service.name}
                           </h3>
-                          <span className="text-foreground text-base font-bold">
-                            {Intl.NumberFormat("pt-BR", {
-                              style: "currency",
-                              currency: "BRL",
-                            }).format(Number(service.priceInCents) / 100)}
+                          <span
+                            className={`text-base font-bold ${isSubscribed ? "text-amber-400" : "text-foreground"}`}
+                          >
+                            {isSubscribed
+                              ? "R$ 0,00"
+                              : Intl.NumberFormat("pt-BR", {
+                                  style: "currency",
+                                  currency: "BRL",
+                                }).format(Number(service.priceInCents) / 100)}
                           </span>
                         </div>
 
@@ -464,9 +626,11 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                             Pagamento
                           </span>
                           <span className="text-foreground text-sm font-semibold">
-                            {paymentMethod === "ONLINE"
-                              ? "Cartão (Online)"
-                              : "Na Barbearia"}
+                            {isSubscribed
+                              ? "Plano VIP (Incluso)"
+                              : paymentMethod === "ONLINE"
+                                ? "Cartão (Online)"
+                                : "Na Barbearia"}
                           </span>
                         </div>
                       </CardContent>
@@ -482,9 +646,11 @@ export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
                   >
                     {isPending
                       ? "Processando..."
-                      : paymentMethod === "ONLINE"
-                        ? "Pagar e Confirmar"
-                        : "Confirmar Agendamento"}
+                      : isSubscribed
+                        ? "Confirmar Agendamento"
+                        : paymentMethod === "ONLINE"
+                          ? "Pagar e Confirmar"
+                          : "Confirmar Agendamento"}
                   </Button>
                 </SheetFooter>
               </SheetContent>

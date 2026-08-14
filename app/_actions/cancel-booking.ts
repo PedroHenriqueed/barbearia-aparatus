@@ -7,10 +7,12 @@ import { z } from "zod";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { set } from "date-fns";
 import Stripe from "stripe";
+import { sendRealPushNotification } from "@/app/_services/send-push";
 
 const inputSchema = z.object({
-  bookingId: z.string(), // Aceita qualquer formato de string ID
+  bookingId: z.string(),
 });
 
 export const cancelBooking = actionClient
@@ -28,6 +30,10 @@ export const cancelBooking = actionClient
 
     const booking = await prisma.booking.findUnique({
       where: { id: bookingId },
+      include: {
+        service: true,
+        barbershop: true,
+      },
     });
 
     if (!booking) {
@@ -42,31 +48,22 @@ export const cancelBooking = actionClient
       });
     }
 
-    // Tenta realizar o estorno no Stripe caso o agendamento tenha sido pago online
     if (booking.paymentStatus === "PAID" && booking.paymentId) {
       if (process.env.STRIPE_SECRET_KEY) {
         try {
           const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-
           if (booking.paymentId.startsWith("pi_")) {
-            await stripe.refunds.create({
-              payment_intent: booking.paymentId,
-            });
+            await stripe.refunds.create({ payment_intent: booking.paymentId });
           } else if (booking.paymentId.startsWith("ch_")) {
-            await stripe.refunds.create({
-              charge: booking.paymentId,
-            });
+            await stripe.refunds.create({ charge: booking.paymentId });
           }
         } catch (stripeError: any) {
-          console.error(
-            "⚠️ Erro ao estornar no Stripe (cancelamento prosseguirá):",
-            stripeError.message,
-          );
+          console.error("⚠️ Erro ao estornar no Stripe:", stripeError.message);
         }
       }
     }
 
-    // Marca o agendamento como cancelado no banco de dados
+    // 1. Marca como cancelado
     await prisma.booking.update({
       where: { id: bookingId },
       data: {
@@ -74,6 +71,58 @@ export const cancelBooking = actionClient
         cancelledAt: new Date(),
       },
     });
+
+    // 🔹 Normaliza a data para garantir comparação exata no banco
+    const normalizedDate = set(new Date(booking.date), {
+      seconds: 0,
+      milliseconds: 0,
+    });
+
+    // 2. Busca TODOS os usuários que pediram para ser avisados
+    const interestedUsers = await prisma.waitlist.findMany({
+      where: {
+        barbershopId: booking.babershopId,
+        date: normalizedDate,
+      },
+    });
+
+    if (interestedUsers.length > 0) {
+      const timeString = normalizedDate.toLocaleTimeString("pt-BR", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+
+      const title = "Horário Liberado!";
+      const message = `O horário das ${timeString} na ${booking.barbershop.name} está disponível! Acesse o app para agendar.`;
+
+      for (const userAlert of interestedUsers) {
+        // Grava no sino de notificações
+        await prisma.notification.create({
+          data: {
+            userId: userAlert.userId,
+            title,
+            message,
+            type: "PROMOTION",
+          },
+        });
+
+        // Envia notificação Push nativa
+        await sendRealPushNotification({
+          userId: userAlert.userId,
+          title,
+          message,
+          url: `/barbershops/${booking.babershopId}?serviceId=${booking.servicesId}`,
+        });
+      }
+
+      // 3. Limpa as solicitações de alerta para este horário
+      await prisma.waitlist.deleteMany({
+        where: {
+          barbershopId: booking.babershopId,
+          date: normalizedDate,
+        },
+      });
+    }
 
     revalidatePath("/bookings");
     revalidatePath("/");

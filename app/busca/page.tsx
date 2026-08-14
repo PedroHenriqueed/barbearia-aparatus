@@ -93,7 +93,7 @@ export default async function BuscaPage({
                 <PageSectionTitle>Barbearias Populares</PageSectionTitle>
                 <Link
                   href="/barbershops"
-                  className="text-primary text-xs font-semibold hover:underline"
+                  className="text-zinc-400 text-xs font-semibold hover:underline"
                 >
                   Ver todas
                 </Link>

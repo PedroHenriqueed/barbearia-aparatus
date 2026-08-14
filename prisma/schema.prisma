@@ -10,6 +10,7 @@ datasource db {
 enum PaymentMethod {
   IN_PERSON
   ONLINE
+  SUBSCRIPTION
 }
 
 enum PaymentStatus {
@@ -24,6 +25,20 @@ enum NotificationType {
   REMINDER_2H
 }
 
+enum WaitlistStatus {
+  WAITING // Na fila aguardando
+  NOTIFIED // Foi notificado (inicia o timer de 30 min)
+  EXPIRED // Perdeu o tempo de 30 min
+  BOOKED // Conseguiu agendar o horário
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  INCOMPLETE
+}
+
 model Barbershop {
   id          String              @id @default(uuid())
   name        String
@@ -35,6 +50,8 @@ model Barbershop {
   bookings    Booking[]
   favorites   Favorite[]
   reviews     Review[]
+  waitlists   Waitlist[]
+  plans Plan[]
 }
 
 model BarbershopService {
@@ -46,6 +63,7 @@ model BarbershopService {
   barbershop   Barbershop @relation(fields: [babershopId], references: [id])
   priceInCents Int
   bookings     Booking[]
+  waitlists    Waitlist[]
 }
 
 model Booking {
@@ -63,26 +81,28 @@ model Booking {
   stripeSessionId String?           @unique
 
   // Controle de pagamento opcional
-  paymentMethod   PaymentMethod     @default(IN_PERSON)
-  paymentStatus   PaymentStatus     @default(PENDING)
+  paymentMethod PaymentMethod @default(IN_PERSON)
+  paymentStatus PaymentStatus @default(PENDING)
 }
 
 model User {
-  id            String     @id
-  name          String
-  email         String
-  emailVerified Boolean    @default(false)
-  image         String?
-  phone         String?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @default(now()) @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  bookings      Booking[]
-  favorites     Favorite[]
-  reviews       Review[]
-  notifications Notification[]
+  id                String             @id
+  name              String
+  email             String
+  emailVerified     Boolean            @default(false)
+  image             String?
+  phone             String?
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @default(now()) @updatedAt
+  sessions          Session[]
+  accounts          Account[]
+  bookings          Booking[]
+  favorites         Favorite[]
+  reviews           Review[]
+  notifications     Notification[]
   pushSubscriptions PushSubscription[]
+  waitlists         Waitlist[]
+  subscriptions Subscription[]
 
   @@unique([email])
   @@map("user")
@@ -134,10 +154,10 @@ model Verification {
 }
 
 model Favorite {
-  id           String     @id @default(cuid())
-  userId       String 
+  id           String   @id @default(cuid())
+  userId       String
   barbershopId String
-  createdAt    DateTime   @default(now())
+  createdAt    DateTime @default(now())
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
@@ -146,28 +166,28 @@ model Favorite {
 }
 
 model Review {
-  id           String     @id @default(cuid())
+  id           String   @id @default(cuid())
   userId       String
   barbershopId String
   rating       Int
   comment      String?
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @default(now()) @updatedAt
-  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @default(now()) @updatedAt
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
   @@unique([userId, barbershopId])
 }
 
 model Notification {
-  id          String  @id @default(cuid())
-  userId      String
-  title       String
-  message     String
-  type        NotificationType @default(PROMOTION)  
-  read        Boolean @default(false)
-  createdAt   DateTime @default(now())
+  id        String           @id @default(cuid())
+  userId    String
+  title     String
+  message   String
+  type      NotificationType @default(PROMOTION)
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
@@ -180,4 +200,48 @@ model PushSubscription {
   createdAt DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Waitlist {
+  id           String         @id @default(cuid())
+  userId       String
+  barbershopId String
+  serviceId    String
+  date         DateTime // O horário exato que ele quer
+  status       WaitlistStatus @default(WAITING)
+  createdAt    DateTime       @default(now()) // Define a ordem da fila!
+  notifiedAt   DateTime? // Marca o momento exato em que foi notificado
+
+  user       User              @relation(fields: [userId], references: [id])
+  barbershop Barbershop        @relation(fields: [barbershopId], references: [id])
+  service    BarbershopService @relation(fields: [serviceId], references: [id])
+}
+
+model Plan {
+  id            String         @id @default(cuid())
+  name          String         // Ex: "Plano VIP Corte Ilimitado"
+  description   String?
+  priceInCents  Int            // Ex: 12000 (R$ 120,00)
+  stripePriceId String         @unique // ID do preço no Stripe (price_1Px...)
+  barbershopId  String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  barbershop    Barbershop     @relation(fields: [barbershopId], references: [id])
+  subscriptions Subscription[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  userId               String
+  planId               String
+  stripeSubscriptionId String             @unique // sub_1Px...
+  stripeCustomerId     String             // cus_1Px...
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodEnd     DateTime           // Data do próximo vencimento/renovação
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+  plan Plan @relation(fields: [planId], references: [id])
 }

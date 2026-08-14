@@ -12,8 +12,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import ServiceItem from "./service-item";
-import { Barbershop, BarbershopService, Review, User } from "@prisma/client";
+import {
+  Barbershop,
+  BarbershopService,
+  Plan,
+  Review,
+  User,
+} from "@prisma/client";
 import ReviewDialog from "@/app/_components/review";
+import PlanItem from "./plan-item";
 
 type ReviewWithUser = Review & {
   user: User;
@@ -22,6 +29,7 @@ type ReviewWithUser = Review & {
 interface BarbershopDetailsProps {
   barbershop: Barbershop & {
     services: BarbershopService[];
+    plans?: Plan[];
     reviews?: ReviewWithUser[];
   };
   initialFavorite: boolean;
@@ -37,6 +45,9 @@ export default function BarbershopDetails({
 }: BarbershopDetailsProps) {
   const [isFavorite, setIsFavorite] = useState(initialFavorite);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 🔹 Estado para controlar a aba ativa ("services" ou "plans")
+  const [activeTab, setActiveTab] = useState<"services" | "plans">("services");
 
   async function toggleFavorite() {
     if (isLoading) return;
@@ -102,7 +113,7 @@ export default function BarbershopDetails({
               </p>
             </div>
 
-            {/* BOTÃO FAVORITO FUNCIONAL */}
+            {/* BOTÃO FAVORITO */}
             <Button
               variant="ghost"
               size="icon"
@@ -145,104 +156,143 @@ export default function BarbershopDetails({
 
       <Separator className="my-6" />
 
-      {/* SEÇÃO DE SERVIÇOS */}
-      <div className="px-5">
-        <h2 className="text-muted-foreground mb-3 text-xs font-bold uppercase">
-          SERVIÇOS
-        </h2>
-        <div className="flex w-full max-w-full min-w-0 flex-col gap-3 text-sm">
-          {barbershop.services.map((service) => (
-            <ServiceItem
-              key={service.id}
-              service={service}
-              barbershop={barbershop}
-            />
-          ))}
-        </div>
+      {/* ── BOTÕES DAS ABAS (SERVIÇOS / ASSINATURAS) ── */}
+      <div className="flex gap-2 px-5">
+        <button
+          type="button"
+          onClick={() => setActiveTab("services")}
+          className={`rounded-full px-5 py-2 text-xs font-bold transition-all ${
+            activeTab === "services"
+              ? "bg-white text-black shadow-sm"
+              : "border border-zinc-800 bg-transparent text-zinc-400 hover:bg-zinc-900 hover:text-white"
+          }`}
+        >
+          Serviços
+        </button>
+
+        {barbershop.plans && barbershop.plans.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setActiveTab("plans")}
+            className={`flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-bold transition-all ${
+              activeTab === "plans"
+                ? "bg-white text-black shadow-sm"
+                : "border border-zinc-800 bg-transparent text-zinc-400 hover:bg-zinc-900 hover:text-white"
+            }`}
+          >
+            Assinaturas
+          </button>
+        )}
       </div>
 
-      <Separator className="my-6" />
-
-      {/* SEÇÃO DE CONTATO */}
-      <div className="px-5">
-        <h2 className="text-muted-foreground mb-3 text-xs font-bold uppercase">
-          CONTATO
-        </h2>
-        <div className="flex flex-col gap-2">
-          {barbershop.phones.map((phone, index) => (
-            <div
-              key={`${phone}-${index}`}
-              className="flex w-full min-w-0 items-center justify-between gap-2"
-            >
-              <div className="flex min-w-0 items-center gap-2 overflow-hidden">
-                <i className="fi fi-rr-smartphone text-foreground shrink-0"></i>
-                <span className="text-foreground truncate text-sm">
-                  {phone}
-                </span>
-              </div>
-              <Button
-                size="sm"
-                className="shrink-0 rounded-full bg-white px-4 text-xs font-bold text-black hover:bg-[#ffffff]/70"
-                onClick={() => copyToClipboard(phone)}
-              >
-                Copiar
-              </Button>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <Separator className="my-6" />
-
-      {/* SEÇÃO DE AVALIAÇÕES E COMENTÁRIOS */}
-      <div className="px-5 pb-10">
-        <h2 className="text-muted-foreground mb-3 text-xs font-bold uppercase">
-          AVALIAÇÕES ({totalReviews})
-        </h2>
-
-        {barbershop.reviews && barbershop.reviews.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            {barbershop.reviews.map((review) => (
-              <div
-                key={review.id}
-                className="flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4"
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={review.user.image ?? ""} />
-                      <AvatarFallback>
-                        {review.user.name?.[0]?.toUpperCase() || "U"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-semibold text-white">
-                      {review.user.name}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-1">
-                    <StarIcon size={14} className="fill-white text-white" />
-                    <span className="text-xs font-bold text-white">
-                      {review.rating}
-                    </span>
-                  </div>
-                </div>
-
-                {review.comment && (
-                  <p className="pt-1 text-xs break-words text-gray-300">
-                    {review.comment}
-                  </p>
-                )}
-              </div>
+      {/* ── CONTEÚDO DA ABA SELECIONADA ── */}
+      <div className="px-5 pt-4">
+        {activeTab === "services" ? (
+          <div className="flex w-full max-w-full min-w-0 flex-col gap-3 text-sm">
+            {barbershop.services.map((service) => (
+              <ServiceItem
+                key={service.id}
+                service={service}
+                barbershop={barbershop}
+              />
             ))}
           </div>
         ) : (
-          <p className="text-xs text-gray-400">
-            Esta barbearia ainda não possui avaliações. Seja o primeiro a
-            avaliar!
-          </p>
+          <div className="flex w-full max-w-full min-w-0 flex-col gap-3 text-sm">
+            {barbershop.plans?.map((plan) => (
+              <PlanItem key={plan.id} plan={plan} />
+            ))}
+          </div>
         )}
       </div>
+
+      {/* ── EXIBE CONTATO E AVALIAÇÕES APENAS NA ABA DE SERVIÇOS ── */}
+      {activeTab === "services" && (
+        <>
+          <Separator className="my-6" />
+
+          {/* SEÇÃO DE CONTATO */}
+          <div className="px-5">
+            <h2 className="text-muted-foreground mb-3 text-xs font-bold uppercase">
+              CONTATO
+            </h2>
+            <div className="flex flex-col gap-2">
+              {barbershop.phones.map((phone, index) => (
+                <div
+                  key={`${phone}-${index}`}
+                  className="flex w-full min-w-0 items-center justify-between gap-2"
+                >
+                  <div className="flex min-w-0 items-center gap-2 overflow-hidden">
+                    <i className="fi fi-rr-smartphone text-foreground shrink-0"></i>
+                    <span className="text-foreground truncate text-sm">
+                      {phone}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    className="shrink-0 rounded-full bg-white px-4 text-xs font-bold text-black hover:bg-[#ffffff]/70"
+                    onClick={() => copyToClipboard(phone)}
+                  >
+                    Copiar
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <Separator className="my-6" />
+
+          {/* SEÇÃO DE AVALIAÇÕES E COMENTÁRIOS */}
+          <div className="px-5 pb-10">
+            <h2 className="text-muted-foreground mb-3 text-xs font-bold uppercase">
+              AVALIAÇÕES ({totalReviews})
+            </h2>
+
+            {barbershop.reviews && barbershop.reviews.length > 0 ? (
+              <div className="flex flex-col gap-3">
+                {barbershop.reviews.map((review) => (
+                  <div
+                    key={review.id}
+                    className="flex flex-col gap-2 rounded-2xl border border-zinc-800 bg-zinc-900/50 p-4"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src={review.user.image ?? ""} />
+                          <AvatarFallback>
+                            {review.user.name?.[0]?.toUpperCase() || "U"}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span className="text-sm font-semibold text-white">
+                          {review.user.name}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <StarIcon size={14} className="fill-white text-white" />
+                        <span className="text-xs font-bold text-white">
+                          {review.rating}
+                        </span>
+                      </div>
+                    </div>
+
+                    {review.comment && (
+                      <p className="pt-1 text-xs break-words text-gray-300">
+                        {review.comment}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-gray-400">
+                Esta barbearia ainda não possui avaliações. Seja o primeiro a
+                avaliar!
+              </p>
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }

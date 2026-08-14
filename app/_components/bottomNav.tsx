@@ -191,6 +191,15 @@ export default function BottomNav() {
                         <Link href="/avaliations">Avaliações</Link>
                       </Button>
                     </SheetClose>
+                    <Button
+                      variant="ghost"
+                      className="w-full justify-start gap-2 rounded-xl text-sm font-semibold"
+                      asChild
+                    >
+                      <Link href="/subscriptions">
+                        Assinatura
+                      </Link>
+                    </Button>
 
                     <Button
                       className="justify-start gap-2 text-sm font-bold text-white"

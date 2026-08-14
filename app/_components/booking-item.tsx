@@ -4,6 +4,7 @@ import { Card, CardContent } from "./ui/card";
 import { generateGoogleCalendarUrl } from "@/lib/utils";
 import { Calendar1, Smartphone } from "lucide-react";
 import { AvatarImage, Avatar, AvatarFallback } from "./ui/avatar";
+import { PaymentMethod } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { format, isFuture } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -58,7 +59,6 @@ const BookingItem = ({ booking }: BookingItemProps) => {
 
   const isBookingConfirmed = isFuture(booking.date) && !booking.cancelled;
   const isPaid = booking.paymentStatus === "PAID";
-  const isOnlinePayment = booking.paymentMethod === "ONLINE";
 
   const googleCalendarUrl = generateGoogleCalendarUrl({
     title: `${booking.service.name} - ${booking.barbershop.name}`,
@@ -202,7 +202,11 @@ const BookingItem = ({ booking }: BookingItemProps) => {
               <div className="flex items-center justify-between border-t border-zinc-800 pt-3">
                 <span className="text-muted-foreground text-sm">Método</span>
                 <span className="text-foreground text-sm font-medium">
-                  {isOnlinePayment ? "Cartão (Online)" : "Na Barbearia"}
+                  {booking.paymentMethod === PaymentMethod.SUBSCRIPTION
+                    ? "Assinatura"
+                    : booking.paymentMethod === PaymentMethod.ONLINE
+                      ? "Cartão (Online)"
+                      : "Na Barbearia"}
                 </span>
               </div>
 

@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import BarbershopDetails from "./_components/barbershop-details";
 
+export const dynamic = "force-dynamic";
+
 interface BarbershopDetailsPageProps {
   params: Promise<{ id: string }>;
 }
@@ -15,17 +17,18 @@ export default async function BarbershopDetailsPage({
 
   if (!id) return notFound();
 
-  // 1. Busca a barbearia com os serviços e avaliações (ordenadas por data)
+  // 1. Busca a barbearia com serviços, planos e avaliações
   const barbershop = await prisma.barbershop.findUnique({
     where: { id },
     include: {
       services: true,
+      plans: true,
       reviews: {
         include: {
           user: true,
         },
         orderBy: {
-          createdAt: "desc", // 👈 O orderBy fica DENTRO de reviews
+          createdAt: "desc",
         },
       },
     },
@@ -54,7 +57,7 @@ export default async function BarbershopDetailsPage({
 
   // 3. Calcula a média e o total das avaliações
   const reviewAvg = await prisma.review.aggregate({
-    where: { barbershopId: id }, // 👈 Usamos o `id` já desestruturado
+    where: { barbershopId: id },
     _avg: {
       rating: true,
     },
@@ -63,7 +66,6 @@ export default async function BarbershopDetailsPage({
     },
   });
 
-  // 4. Formata a média com 1 casa decimal (ex: 4.8)
   const averageScore = reviewAvg._avg.rating
     ? Number(reviewAvg._avg.rating.toFixed(1))
     : 0;

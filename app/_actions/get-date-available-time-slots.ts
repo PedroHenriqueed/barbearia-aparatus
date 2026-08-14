@@ -3,16 +3,24 @@
 import { prisma } from "@/lib/prisma";
 import { endOfDay, startOfDay } from "date-fns";
 
+export interface TimeSlot {
+  time: string;
+  available: boolean;
+  isBooked: boolean;
+  isPast: boolean;
+  waitlistCount: number;
+}
+
 export const getDateAvailableTimeSlots = async ({
   babershopId,
   date,
 }: {
   babershopId: string;
   date: Date | string;
-}) => {
+}): Promise<TimeSlot[]> => {
   const dateObj = new Date(date);
 
-  // Busca todos os agendamentos ATIVOS para aquele dia e barbearia
+  // 1. Busca os agendamentos ativos do dia
   const bookings = await prisma.booking.findMany({
     where: {
       babershopId: babershopId,
@@ -20,11 +28,22 @@ export const getDateAvailableTimeSlots = async ({
         gte: startOfDay(dateObj),
         lte: endOfDay(dateObj),
       },
-      cancelled: false, // 👈 AQUI ESTÁ A CORREÇÃO! Ignora os cancelados.
+      cancelled: false,
     },
   });
 
-  // Todos os horários possíveis
+  // 2. Busca as solicitações ativas de Fila de Espera do dia
+  const waitlists = await prisma.waitlist.findMany({
+    where: {
+      barbershopId: babershopId,
+      date: {
+        gte: startOfDay(dateObj),
+        lte: endOfDay(dateObj),
+      },
+      status: { in: ["WAITING", "NOTIFIED"] },
+    },
+  });
+
   const timeSlots = [
     "09:00",
     "09:30",
@@ -47,38 +66,43 @@ export const getDateAvailableTimeSlots = async ({
     "18:00",
   ];
 
-  // Filtra os horários
-  const availableTimeSlots = timeSlots.filter((time) => {
+  const now = new Date();
+
+  // 3. Mapeia cada horário com seu status completo
+  return timeSlots.map((time) => {
     const [hour, minute] = time.split(":").map(Number);
 
-    const hasBooking = bookings.some((booking) => {
+    // Verifica se há agendamento
+    const isBooked = bookings.some((booking) => {
       const bookingHour = booking.date.getHours();
       const bookingMinute = booking.date.getMinutes();
-
       return bookingHour === hour && bookingMinute === minute;
     });
 
-    if (hasBooking) {
-      return false;
-    }
-
-    const now = new Date();
+    // Verifica se o horário já passou hoje
     const slotDate = new Date(dateObj);
     slotDate.setHours(hour, minute, 0, 0);
 
-    // Bloqueia horários que já passaram no dia de hoje
-    if (
+    const isToday =
       now.getDate() === slotDate.getDate() &&
       now.getMonth() === slotDate.getMonth() &&
-      now.getFullYear() === slotDate.getFullYear()
-    ) {
-      if (now > slotDate) {
-        return false;
-      }
-    }
+      now.getFullYear() === slotDate.getFullYear();
 
-    return true;
+    const isPast = isToday && now > slotDate;
+
+    // Conta quantas pessoas estão na fila para este horário
+    const waitlistCount = waitlists.filter((w) => {
+      const wHour = w.date.getHours();
+      const wMinute = w.date.getMinutes();
+      return wHour === hour && wMinute === minute;
+    }).length;
+
+    return {
+      time,
+      available: !isBooked && !isPast,
+      isBooked,
+      isPast,
+      waitlistCount,
+    };
   });
-
-  return availableTimeSlots;
 };
