@@ -15,18 +15,23 @@ import { Input } from "@/app/_components/ui/input";
 
 interface ShareDialogProps {
   barbershopName: string;
+  slug?: string | null;
 }
 
-export function ShareDialog({ barbershopName }: ShareDialogProps) {
+export function ShareDialog({ barbershopName, slug  }: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
 
-  const getShareUrl = () => {
-    if (typeof window !== "undefined") {
-      return window.location.href;
+const getShareUrl = () => {
+  if (typeof window !== "undefined") {
+    if (slug) {
+      // Monta o link amigável: https://seusite.com/nome-da-barbearia
+      return `${window.location.origin}/${slug}`;
     }
-    return "";
-  };
-
+    // Fallback para o ID longo caso a barbearia não tenha slug
+    return window.location.href;
+  }
+  return "";
+};
   const handleCopy = async () => {
     const url = getShareUrl();
     await navigator.clipboard.writeText(url);

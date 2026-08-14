@@ -148,7 +148,10 @@ async function handleShare() {
             </div>
 
             <div className="flex items-center gap-1">
-              <ShareDialog barbershopName={barbershop.name} />
+              <ShareDialog
+                barbershopName={barbershop.name}
+                slug={barbershop.slug}
+              />
               {/* BOTÃO FAVORITO */}
               <Button
                 variant="ghost"
@@ -171,7 +174,6 @@ async function handleShare() {
                   strokeWidth={2}
                 />
               </Button>
-
             </div>
           </div>
 
