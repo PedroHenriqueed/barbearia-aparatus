@@ -1,5 +1,6 @@
 import Header from "./_components/header";
 import BookingItem from "./_components/booking-item";
+import RepeatBookingCard from "./_components/repeat-booking-card";
 import { prisma } from "@/lib/prisma";
 import BarbershopItem from "./_components/barbershop-item";
 import { auth } from "@/lib/auth";
@@ -27,6 +28,7 @@ const Home = async (props: HomeProps) => {
     },
   });
 
+  // 1. Agendamento futuro confirmado
   const confirmedBooking = session?.user
     ? await prisma.booking.findFirst({
         where: {
@@ -46,6 +48,27 @@ const Home = async (props: HomeProps) => {
       })
     : null;
 
+  // 2. Último agendamento realizado (buscado apenas se NÃO houver confirmado)
+  const lastBooking =
+    session?.user && !confirmedBooking
+      ? await prisma.booking.findFirst({
+          where: {
+            userId: session.user.id,
+            date: {
+              lt: new Date(),
+            },
+            cancelled: false,
+          },
+          include: {
+            service: true,
+            barbershop: true,
+          },
+          orderBy: {
+            date: "desc",
+          },
+        })
+      : null;
+
   return (
     <main className="bg-background min-h-screen w-full pb-24">
       {/* ── 1. HERO COM VÍDEO ── */}
@@ -64,10 +87,8 @@ const Home = async (props: HomeProps) => {
         <div className="via-background/60 to-background pointer-events-none absolute inset-x-0 bottom-0 z-10 h-16 bg-gradient-to-b from-transparent" />
 
         <div className="relative z-20 flex h-full flex-col justify-between p-4">
-          {/* O Header tem altura fixa, então não afeta o layout do restante */}
           <Header />
 
-          {/* A saudação fica anchored na parte de baixo */}
           <div className="flex flex-col gap-0.5 pb-1">
             <h2 className="text-xl tracking-tight text-white">
               {session?.user ? (
@@ -98,12 +119,21 @@ const Home = async (props: HomeProps) => {
           </div>
         )}
 
+        {/* Último Agendamento (Sempre que não houver agendamento confirmado futuro) */}
+        {!confirmedBooking && lastBooking && (
+          <div className="flex flex-col gap-2">
+            <h2 className="text-xs font-bold text-gray-400 uppercase">
+              Último Agendamento
+            </h2>
+            <RepeatBookingCard booking={lastBooking} />
+          </div>
+        )}
+
         {/* Recomendados */}
         <div className="flex flex-col gap-2">
           <h2 className="text-xs font-bold text-gray-400 uppercase">
             Recomendados
           </h2>
-          {/* Renderiza os cards diretamente para preservar a altura nativa do BarbershopItem */}
           <div className="flex gap-4 overflow-x-auto pb-2 [&::-webkit-scrollbar]:hidden">
             {recommendedBarbershops.map((barbershop) => (
               <BarbershopItem key={barbershop.id} barbershop={barbershop} />
@@ -111,7 +141,6 @@ const Home = async (props: HomeProps) => {
           </div>
         </div>
       </div>
-
     </main>
   );
 };

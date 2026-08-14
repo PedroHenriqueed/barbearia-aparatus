@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Barbershop, BarbershopService } from "@prisma/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAction } from "next-safe-action/hooks";
@@ -50,11 +50,17 @@ interface ServiceItemProps {
 
 export default function ServiceItem({ service, barbershop }: ServiceItemProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+
+  const serviceIdParam = searchParams.get("serviceId");
 
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [calendarUrl, setCalendarUrl] = useState<string>("");
-  const [sheetIsOpen, setSheetIsOpen] = useState(false);
+
+  // 🔹 Inicializa o estado diretamente com a verificação da URL (sem useEffect)
+  const [sheetIsOpen, setSheetIsOpen] = useState(serviceIdParam === service.id);
+
   const [selectedTime, setSelectedTime] = useState<string | undefined>(
     undefined,
   );

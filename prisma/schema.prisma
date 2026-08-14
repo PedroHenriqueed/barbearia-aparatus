@@ -18,6 +18,12 @@ enum PaymentStatus {
   REFUNDED
 }
 
+enum NotificationType {
+  PROMOTION
+  REMINDER_24H
+  REMINDER_2H
+}
+
 model Barbershop {
   id          String              @id @default(uuid())
   name        String
@@ -75,6 +81,8 @@ model User {
   bookings      Booking[]
   favorites     Favorite[]
   reviews       Review[]
+  notifications Notification[]
+  pushSubscriptions PushSubscription[]
 
   @@unique([email])
   @@map("user")
@@ -150,4 +158,26 @@ model Review {
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   @@unique([userId, barbershopId])
+}
+
+model Notification {
+  id          String  @id @default(cuid())
+  userId      String
+  title       String
+  message     String
+  type        NotificationType @default(PROMOTION)  
+  read        Boolean @default(false)
+  createdAt   DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  keys      Json
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }

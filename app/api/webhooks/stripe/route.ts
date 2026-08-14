@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { prisma } from "@/lib/prisma";
 import { PaymentMethod, PaymentStatus } from "@prisma/client";
+import { sendRealPushNotification } from "@/app/_services/send-push";
 
 export const dynamic = "force-dynamic";
 
@@ -67,8 +68,8 @@ export async function POST(request: Request) {
           return NextResponse.json({ received: true });
         }
 
-        // Criação da reserva no banco de dados
-        await prisma.booking.create({
+        // 1. Criação da reserva no banco de dados (incluindo dados do serviço e barbearia para o texto da notificação)
+        const newBooking = await prisma.booking.create({
           data: {
             date: new Date(date),
             paymentId: paymentId,
@@ -85,9 +86,34 @@ export async function POST(request: Request) {
               connect: { id: barbershopId },
             },
           },
+          include: {
+            service: true,
+            barbershop: true,
+          },
         });
 
         console.log("✅ Reserva criada com sucesso! Session ID:", session.id);
+
+        const notificationTitle = "Pagamento e Agendamento Confirmados! 💳";
+        const notificationMessage = `Sua reserva para ${newBooking.service.name} na ${newBooking.barbershop.name} foi confirmada.`;
+
+        // 2. Salva a notificação no banco de dados (para a gaveta de notificações do app)
+        await prisma.notification.create({
+          data: {
+            userId,
+            title: notificationTitle,
+            message: notificationMessage,
+            type: "PROMOTION",
+          },
+        });
+
+        // 3. Envia o Push real no dispositivo/computador do usuário
+        await sendRealPushNotification({
+          userId,
+          title: notificationTitle,
+          message: notificationMessage,
+          url: "/bookings",
+        });
       } catch (dbError: any) {
         console.error("❌ ERRO AO SALVAR RESERVA NO BANCO (Webhook):", dbError);
         return NextResponse.json(

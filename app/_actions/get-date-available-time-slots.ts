@@ -4,22 +4,23 @@ import { prisma } from "@/lib/prisma";
 import { endOfDay, startOfDay } from "date-fns";
 
 export const getDateAvailableTimeSlots = async ({
-  babershopId, // CORRIGIDO: adicionado o "r"
+  babershopId,
   date,
 }: {
-  babershopId: string; // CORRIGIDO
+  babershopId: string;
   date: Date | string;
 }) => {
   const dateObj = new Date(date);
 
-  // Busca todos os agendamentos para aquele dia e barbearia
+  // Busca todos os agendamentos ATIVOS para aquele dia e barbearia
   const bookings = await prisma.booking.findMany({
     where: {
-      babershopId: babershopId, // CORRIGIDO AQUI
+      babershopId: babershopId,
       date: {
         gte: startOfDay(dateObj),
         lte: endOfDay(dateObj),
       },
+      cancelled: false, // 👈 AQUI ESTÁ A CORREÇÃO! Ignora os cancelados.
     },
   });
 
@@ -65,6 +66,7 @@ export const getDateAvailableTimeSlots = async ({
     const slotDate = new Date(dateObj);
     slotDate.setHours(hour, minute, 0, 0);
 
+    // Bloqueia horários que já passaram no dia de hoje
     if (
       now.getDate() === slotDate.getDate() &&
       now.getMonth() === slotDate.getMonth() &&
