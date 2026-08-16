@@ -189,10 +189,7 @@ async function handleShare() {
                 {totalReviews === 1 ? "avaliação" : "avaliações"})
               </span>
             </div>
-
-            {/* BOTÃO MODAL DE AVALIAÇÃO */}
-            <ReviewDialog barbershopId={barbershop.id} />
-          </div>
+         </div>
         </div>
       </div>
 

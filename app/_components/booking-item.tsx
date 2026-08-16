@@ -34,12 +34,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "./ui/alert-dialog";
+import ReviewDialog from "./review-dialog";
 
 interface BookingItemProps {
   booking: Prisma.BookingGetPayload<{
     include: {
       service: true;
       barbershop: true;
+      review?: true;
     };
   }>;
 }
@@ -242,9 +244,16 @@ const BookingItem = ({ booking }: BookingItemProps) => {
               </a>
             </Button>
           )}
-
+                      {!isBookingConfirmed && !booking.cancelled && !booking.review && (
+            <div className="mt-6">
+              <ReviewDialog
+                barbershopId={booking.babershopId}
+                bookingId={booking.id}
+              />
+            </div>
+          )}
           {/* Telefones */}
-          <div className="flex flex-col gap-3">
+          <div className="flex flex-col gap-3 pt-5">
             {booking.barbershop.phones.map((phone, index) => (
               <div key={index} className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -262,7 +271,9 @@ const BookingItem = ({ booking }: BookingItemProps) => {
               </div>
             ))}
           </div>
+
         </div>
+
 
         {/* RODAPÉ DO SHEET */}
         <SheetFooter className="border-border bg-background flex flex-row gap-3 border-t p-5">
@@ -274,6 +285,7 @@ const BookingItem = ({ booking }: BookingItemProps) => {
               Voltar
             </Button>
           </SheetClose>
+
 
           {/* Botão de Cancelar */}
           {isBookingConfirmed && (

@@ -27,6 +27,7 @@ const BookingsPage = async () => {
     include: {
       service: true,
       barbershop: true,
+      review: true,
     },
     orderBy: {
       date: "asc",

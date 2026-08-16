@@ -17,7 +17,7 @@ import { createBarbershopRating } from "@/app/_actions/create-review";
 
 interface ReviewDialogProps {
   barbershopId: string;
-  bookingId?: string; // 👈 Adicionado para vincular ao agendamento
+  bookingId?: string;
 }
 
 export default function ReviewDialog({
@@ -48,7 +48,10 @@ export default function ReviewDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" className="rounded-xl font-bold">
+        <Button
+          variant="outline"
+          className="border-border text-foreground hover:bg-secondary h-12 w-full flex-1 rounded-xl text-base font-bold"
+        >
           Avaliar Atendimento
         </Button>
       </DialogTrigger>
@@ -79,7 +82,7 @@ export default function ReviewDialog({
                   size={28}
                   className={`${
                     star <= (hoverRating || rating)
-                      ? "fill-white text-white"
+                      ? "fill-white text-zinc-400"
                       : "text-zinc-600"
                   }`}
                 />
@@ -87,7 +90,7 @@ export default function ReviewDialog({
             ))}
           </div>
 
-          {/* Campo de Comentário */}
+          {/* Campo de Comentário com HTML nativo */}
           <textarea
             placeholder="Conte como foi sua experiência (opcional)"
             value={comment}

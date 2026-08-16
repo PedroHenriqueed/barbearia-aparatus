@@ -1,13 +1,25 @@
 import Link from "next/link";
-import { Barbershop } from "@prisma/client";
+import { Barbershop, Review } from "@prisma/client";
 import Image from "next/image";
 import { StarIcon } from "lucide-react";
 
 interface BarbershopItemProps {
-  barbershop: Barbershop;
+  barbershop: Barbershop & {
+    reviews?: Review[];
+  };
 }
 
 const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
+  // Cálculo do review dinâmico
+  const totalReviews = barbershop.reviews?.length || 0;
+  const averageRating =
+    totalReviews > 0
+      ? (
+          barbershop.reviews!.reduce((acc, r) => acc + r.rating, 0) /
+          totalReviews
+        ).toFixed(1)
+      : "Novo";
+
   // 1. Pega a hora atual do servidor e converte para o fuso do Brasil (Brasília)
   const now = new Date();
   const brazilDate = new Date(
@@ -34,7 +46,9 @@ const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
       />
       <div className="absolute top-2 left-2 flex items-center gap-1 rounded-lg bg-black/60 px-2 py-1 backdrop-blur-sm">
         <StarIcon size={12} className="fill-[#ffff] text-white" />
-        <span className="text-xs text-white">4.9 (179)</span>
+        <span className="text-xs text-white">
+          {averageRating} {totalReviews > 0 ? `(${totalReviews})` : ""}
+        </span>
       </div>
 
       <div className="absolute right-0 bottom-0 left-0 z-20 p-4">

@@ -84,6 +84,8 @@ model Booking {
   // Controle de pagamento opcional
   paymentMethod PaymentMethod @default(IN_PERSON)
   paymentStatus PaymentStatus @default(PENDING)
+
+  review Review?
 }
 
 model User {
@@ -170,6 +172,7 @@ model Review {
   id           String   @id @default(cuid())
   userId       String
   barbershopId String
+  bookingId    String?  @unique
   rating       Int
   comment      String?
   createdAt    DateTime @default(now())
@@ -177,7 +180,7 @@ model Review {
 
   user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
-
+  booking    Booking?   @relation(fields: [bookingId], references: [id], onDelete: Cascade) // 👈 Relação com Booking
   @@unique([userId, barbershopId])
 }
 
