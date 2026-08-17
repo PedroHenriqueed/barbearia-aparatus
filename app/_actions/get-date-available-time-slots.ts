@@ -25,6 +25,7 @@ const getBrazilDateInfo = (dateInput: Date | string) => {
   return {
     dateStr: `${year}-${month}-${day}`,
     timeStr: `${hours}:${minutes}`,
+    dayOfWeek: brDate.getDay(), // 0 = Domingo, 1 = Segunda, ..., 6 = Sábado
   };
 };
 
@@ -37,14 +38,20 @@ export const getDateAvailableTimeSlots = async ({
 }): Promise<TimeSlot[]> => {
   const targetBR = getBrazilDateInfo(date);
 
-  // Busca agendamentos em um intervalo amplo para cobrir diferenças de fuso
   const inputDateObj = new Date(date);
   const startRange = new Date(inputDateObj);
   startRange.setDate(startRange.getDate() - 2);
   const endRange = new Date(inputDateObj);
   endRange.setDate(endRange.getDate() + 2);
 
-  const [bookings, waitlists] = await Promise.all([
+  // Busca a configuração do dia, agendamentos e lista de espera
+  const [openingHour, bookings, waitlists] = await Promise.all([
+    prisma.openingHour.findFirst({
+      where: {
+        barbershopId: babershopId,
+        dayOfWeek: targetBR.dayOfWeek,
+      },
+    }),
     prisma.booking.findMany({
       where: {
         babershopId,
@@ -61,7 +68,12 @@ export const getDateAvailableTimeSlots = async ({
     }),
   ]);
 
-  // Mapeia os horários ocupados convertidos para o fuso do Brasil
+  // Se a barbearia não estiver configurada ou estiver fechada no dia, retorna vazio
+  if (!openingHour || !openingHour.isOpen) {
+    return [];
+  }
+
+  // Mapeia os horários ocupados no fuso do Brasil
   const bookedTimes = new Set<string>();
   bookings.forEach((b) => {
     const bBR = getBrazilDateInfo(b.date);
@@ -79,37 +91,53 @@ export const getDateAvailableTimeSlots = async ({
     }
   });
 
-  const timeSlots = [
-    "09:00",
-    "09:30",
-    "10:00",
-    "10:30",
-    "11:00",
-    "11:30",
-    "12:00",
-    "12:30",
-    "13:00",
-    "13:30",
-    "14:00",
-    "14:30",
-    "15:00",
-    "15:30",
-    "16:00",
-    "16:30",
-    "17:00",
-    "17:30",
-    "18:00",
-  ];
+  // Gera a lista de horários dinâmica com base no expediente e almoço
+  const generatedTimeSlots: string[] = [];
+  const [startH, startM] = openingHour.startTime.split(":").map(Number);
+  const [endH, endM] = openingHour.endTime.split(":").map(Number);
+
+  let currentMinutes = startH * 60 + startM;
+  const endMinutes = endH * 60 + endM;
+
+  const [lunchStartH, lunchStartM] = openingHour.lunchStart
+    ? openingHour.lunchStart.split(":").map(Number)
+    : [-1, -1];
+  const [lunchEndH, lunchEndM] = openingHour.lunchEnd
+    ? openingHour.lunchEnd.split(":").map(Number)
+    : [-1, -1];
+
+  const lunchStartMinutes =
+    lunchStartH >= 0 ? lunchStartH * 60 + lunchStartM : -1;
+  const lunchEndMinutes = lunchEndH >= 0 ? lunchEndH * 60 + lunchEndM : -1;
+
+  while (currentMinutes <= endMinutes) {
+    const h = Math.floor(currentMinutes / 60)
+      .toString()
+      .padStart(2, "0");
+    const m = (currentMinutes % 60).toString().padStart(2, "0");
+    const timeStr = `${h}:${m}`;
+
+    // Ignora se estiver no intervalo de almoço
+    const isLunch =
+      lunchStartMinutes >= 0 &&
+      lunchEndMinutes >= 0 &&
+      currentMinutes >= lunchStartMinutes &&
+      currentMinutes < lunchEndMinutes;
+
+    if (!isLunch) {
+      generatedTimeSlots.push(timeStr);
+    }
+
+    currentMinutes += 30; // Intervalo de 30 minutos por agendamento
+  }
 
   const nowBR = getBrazilDateInfo(new Date());
 
-  return timeSlots.map((time) => {
+  return generatedTimeSlots.map((time) => {
     const [hour, minute] = time.split(":").map(Number);
 
-    // Marca como ocupado se o horário do Brasil bater com a reserva
     const isBooked = bookedTimes.has(time);
 
-    // Verifica se já passou hoje no Brasil
     const isToday = nowBR.dateStr === targetBR.dateStr;
     const [nowH, nowM] = nowBR.timeStr.split(":").map(Number);
     const isPast =

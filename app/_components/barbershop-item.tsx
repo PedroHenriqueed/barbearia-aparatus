@@ -1,16 +1,54 @@
 import Link from "next/link";
-import { Barbershop, Review } from "@prisma/client";
+import { Barbershop, Review, OpeningHour } from "@prisma/client";
 import Image from "next/image";
 import { StarIcon } from "lucide-react";
 
 interface BarbershopItemProps {
   barbershop: Barbershop & {
     reviews?: Review[];
+    openingHours?: OpeningHour[];
   };
 }
 
-const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
-  // Cálculo do review dinâmico
+// Cálculo preciso do fuso horário de Brasília (compatível com SSR/Node)
+function getBrazilTimeInfo() {
+  const now = new Date();
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    weekday: "short",
+    hour: "numeric",
+    minute: "numeric",
+    hour12: false,
+  });
+
+  const parts = formatter.formatToParts(now);
+  let weekdayStr = "";
+  let hour = 0;
+  let minute = 0;
+
+  for (const part of parts) {
+    if (part.type === "weekday") weekdayStr = part.value;
+    if (part.type === "hour") hour = parseInt(part.value, 10) % 24;
+    if (part.type === "minute") minute = parseInt(part.value, 10);
+  }
+
+  const dayMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6,
+  };
+
+  const dayOfWeek = dayMap[weekdayStr] ?? now.getDay();
+  const currentMinutes = hour * 60 + minute;
+
+  return { dayOfWeek, currentMinutes };
+}
+
+export default function BarbershopItem({ barbershop }: BarbershopItemProps) {
   const totalReviews = barbershop.reviews?.length || 0;
   const averageRating =
     totalReviews > 0
@@ -20,17 +58,49 @@ const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
         ).toFixed(1)
       : "Novo";
 
-  // 1. Pega a hora atual do servidor e converte para o fuso do Brasil (Brasília)
-  const now = new Date();
-  const brazilDate = new Date(
-    now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }),
-  );
+  const getStatus = () => {
+    const { dayOfWeek, currentMinutes } = getBrazilTimeInfo();
+    const barbershopHours = barbershop.openingHours;
+    const hasConfig = barbershopHours && barbershopHours.length > 0;
 
-  // 2. Extrai a hora exata no Brasil (0 a 23)
-  const currentHour = brazilDate.getHours();
+    let isOpenDay = dayOfWeek !== 0; // Padrão caso não haja configuração: Segunda a Sábado aberto
+    let startTime = "08:00";
+    let endTime = "18:00";
 
-  // 3. Verifica se a hora atual está entre 8h (inclusivo) e 18h (exclusivo, ou seja, até 17:59)
-  const isOpen = currentHour >= 8 && currentHour < 18;
+    if (hasConfig) {
+      const todayConfig = barbershopHours.find(
+        (h) => h.dayOfWeek === dayOfWeek,
+      );
+
+      if (todayConfig) {
+        isOpenDay = todayConfig.isOpen;
+        startTime = todayConfig.startTime;
+        endTime = todayConfig.endTime;
+      } else {
+        return { isOpen: false, hoursText: "" };
+      }
+    }
+
+    if (!isOpenDay) {
+      return { isOpen: false, hoursText: "" };
+    }
+
+    const [startH, startM] = startTime.split(":").map(Number);
+    const [endH, endM] = endTime.split(":").map(Number);
+
+    const startMinutes = startH * 60 + startM;
+    const endMinutes = endH * 60 + endM;
+
+    const isOpenNow =
+      currentMinutes >= startMinutes && currentMinutes < endMinutes;
+
+    return {
+      isOpen: isOpenNow,
+      hoursText: `${startTime} - ${endTime}`,
+    };
+  };
+
+  const status = getStatus();
 
   return (
     <Link
@@ -55,18 +125,16 @@ const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
         <div className="mb-1 flex items-center gap-2 text-[10px]">
           <span
             className={`font-bold uppercase ${
-              isOpen ? "text-muted-foreground" : "text-muted-foreground"
+              status.isOpen ? "text-emerald-400" : "text-rose-500"
             }`}
           >
-            {isOpen ? "Aberto" : "Fechado"}
+            {status.isOpen ? "Aberto" : "Fechado"}
           </span>
-          <span className="text-muted-foreground">8:00 - 18:00</span>
+          <span className="text-muted-foreground">{status.hoursText}</span>
         </div>
         <h3 className="text-foreground text-lg font-bold">{barbershop.name}</h3>
         <p className="text-foreground text-xs">{barbershop.address}</p>
       </div>
     </Link>
   );
-};
-
-export default BarbershopItem;
+}

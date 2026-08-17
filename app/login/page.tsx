@@ -87,7 +87,7 @@ export default function LoginPage() {
           src="/3a773e8613d46875310847caab4ec091.jpg"
           alt="Barbearia"
           fill
-          className="object-contain opacity-35"
+          className="object-cover opacity-35"
           priority
           unoptimized
         />

@@ -22,9 +22,13 @@ const Home = async (props: HomeProps) => {
   const searchParams = await props.searchParams;
   const search = searchParams?.search || "";
 
+  // ── INCLUÍDO DE OPENINGHOURS PARA STATUS DINÂMICO ──
   const recommendedBarbershops = await prisma.barbershop.findMany({
     orderBy: {
       name: "asc",
+    },
+    include: {
+      openingHours: true,
     },
   });
 
@@ -120,7 +124,7 @@ const Home = async (props: HomeProps) => {
           </div>
         )}
 
-        {/* Último Agendamento (Sempre que não houver agendamento confirmado futuro) */}
+        {/* Último Agendamento */}
         {!confirmedBooking && lastBooking && (
           <div className="flex flex-col gap-2">
             <h2 className="text-xs font-bold text-gray-400 uppercase">

@@ -40,19 +40,24 @@ enum SubscriptionStatus {
 }
 
 model Barbershop {
-  id          String              @id @default(uuid())
-  name        String
-  address     String
-  description String
-  imageUrl    String
-  phones      String[]
-  services    BarbershopService[]
-  bookings    Booking[]
-  favorites   Favorite[]
-  reviews     Review[]
-  waitlists   Waitlist[]
-  plans Plan[]
-  slug        String?  @unique
+  id           String              @id @default(uuid())
+  name         String
+  address      String
+  description  String
+  imageUrl     String
+  phones       String[]
+  services     BarbershopService[]
+  bookings     Booking[]
+  favorites    Favorite[]
+  reviews      Review[]
+  waitlists    Waitlist[]
+  plans        Plan[]
+  slug         String?             @unique
+  openingHours OpeningHour[]
+
+  // 👇 ADICIONE ESTES DOIS CAMPOS 👇
+  userId       String?
+  user         User?               @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model BarbershopService {
@@ -105,7 +110,10 @@ model User {
   notifications     Notification[]
   pushSubscriptions PushSubscription[]
   waitlists         Waitlist[]
-  subscriptions Subscription[]
+  subscriptions     Subscription[]
+
+  // 👇 ADICIONE ESTA LINHA 👇
+  barbershops       Barbershop[]
 
   @@unique([email])
   @@map("user")
@@ -248,4 +256,21 @@ model Subscription {
 
   user User @relation(fields: [userId], references: [id])
   plan Plan @relation(fields: [planId], references: [id])
+}
+
+model OpeningHour {
+  id           String     @id @default(uuid())
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+  
+  dayOfWeek    Int        // 0 = Domingo, 1 = Segunda, 2 = Terça... 6 = Sábado
+  isOpen       Boolean    @default(true) // Aberto ou Fechado neste dia
+  startTime    String     @default("08:00") // Hora de abertura
+  endTime      String     @default("19:00") // Hora de fechamento
+  
+  // Opcional: Horário de almoço/pausa
+  lunchStart   String?    @default("12:00") 
+  lunchEnd     String?    @default("13:00")
+
+  @@unique([barbershopId, dayOfWeek])
 }

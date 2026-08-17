@@ -209,7 +209,7 @@ export default function EditProfileDialog({
                 <button
                   type="button"
                   onClick={handleRemovePhoto}
-                  className="rounded border border-zinc-800 px-2 py-0.5 text-red-500 hover:bg-red-500/10"
+                  className="rounded px-2 py-0.5 text-red-500 hover:underline"
                 >
                   Remover
                 </button>
@@ -267,7 +267,7 @@ export default function EditProfileDialog({
               <Button
                 type="submit"
                 disabled={isPending}
-                className="h-11 flex-1 rounded-xl bg-blue-600 font-bold text-white hover:bg-blue-700"
+                className="h-11 flex-1 rounded-xl bg-zinc-600 font-bold text-white hover:bg-zinc-700"
               >
                 {isPending ? "Salvando..." : "Salvar"}
               </Button>

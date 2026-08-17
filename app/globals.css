@@ -4,41 +4,51 @@
 @source "../node_modules/streamdown/dist/*.js";
 
 :root {
-  /* CORES DO MODO DARK (agora como padrão) */
+  /* CORES DO MODO DARK (MONOCROMÁTICO: PRETO, BRANCO E CINZA) */
   --background: oklch(0% 0 0);
   --foreground: oklch(0.994 0 0);
   --card: oklch(21.779% 0.00002 271.152);
   --card-foreground: oklch(0.994 0 0);
   --popover: oklch(0.2686 0 0);
   --popover-foreground: oklch(0.994 0 0);
-  --primary: #1546A1;
-  --primary-foreground: oklch(1 0 0);
+
+  /* PRIMARY: Branco com texto Preto */
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+
   --secondary: oklch(0.3211 0 0);
   --secondary-foreground: oklch(0.994 0 0);
   --muted: oklch(0.2891 0 0);
   --muted-foreground: oklch(0.7155 0 0);
-  --accent: #123c89;
+
+  /* ACCENT & HOVER: Cinza escuro */
+  --accent: oklch(0.2686 0 0);
   --accent-foreground: oklch(0.994 0 0);
+
   --destructive: oklch(0.6591 0.153 22.1703);
   --destructive-foreground: oklch(0.2178 0 0);
   --border: oklch(0.3979 0 0);
   --input: oklch(0.2686 0 0);
-  --ring: #1546A1;
-  --chart-1: #2069ED;
-  --chart-2: #3B82F6;
-  --chart-3: #60A5FA;
-  --chart-4: #93C5FD;
-  --chart-5: #BFDBFE;
+  --ring: #ffffff;
+
+  /* GRÁFICOS EM ESCALA DE CINZA */
+  --chart-1: #ffffff;
+  --chart-2: #e4e4e7;
+  --chart-3: #a1a1aa;
+  --chart-4: #71717a;
+  --chart-5: #3f3f46;
+
+  /* SIDEBAR MONOCROMÁTICA */
   --sidebar: oklch(0.2478 0 0);
   --sidebar-foreground: oklch(0.994 0 0);
-  --sidebar-primary: #1546A1;
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: #123c89;
+  --sidebar-primary: #ffffff;
+  --sidebar-primary-foreground: #000000;
+  --sidebar-accent: oklch(0.2686 0 0);
   --sidebar-accent-foreground: oklch(0.994 0 0);
   --sidebar-border: oklch(0.3485 0 0);
-  --sidebar-ring: #1546A1;
+  --sidebar-ring: #ffffff;
 
-  /* FONTES E ESPAÇAMENTOS (mantidos) */
+  /* FONTES E ESPAÇAMENTOS */
   --font-sans: Inter, sans-serif;
   --font-serif: Georgia, serif;
   --font-mono: JetBrains Mono, monospace;

@@ -25,6 +25,7 @@ import { Button } from "./ui/button";
 import { authClient } from "@/lib/auth-client";
 import EditUserDialog from "./edit-user-dialog";
 
+
 const navItems = [
   { label: "Início", href: "/", icon: Home },
   { label: "Busca", href: "/busca", icon: Search },
@@ -34,6 +35,9 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
   const { data: session } = authClient.useSession();
 
   const [isSheetOpen, setIsSheetOpen] = useState(false);

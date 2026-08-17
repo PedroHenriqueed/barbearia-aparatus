@@ -1,10 +1,25 @@
 import Image from "next/image";
 import Link from "next/link";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
+import { prisma as db } from "@/lib/prisma";
 import { NotificationsSheet } from "./ui/notifications-sheet";
 import { getUserNotifications } from "@/app/_actions/notifications";
+import UserMenuSheet from "./user-menu-sheet";
 
 export default async function Header() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
   const notifications = await getUserNotifications();
+
+  // Busca se o usuário possui uma barbearia vinculada
+  const userBarbershop = session?.user
+    ? await db.barbershop.findFirst({
+        where: { userId: session.user.id },
+      })
+    : null;
 
   return (
     <header className="flex h-10 w-full items-center justify-between bg-transparent">
@@ -19,8 +34,21 @@ export default async function Header() {
         />
       </Link>
 
-      {/* ── Extrema Direita: Sino de Notificações ── */}
-      <NotificationsSheet notifications={notifications as any} />
+      {/* ── Extrema Direita: Notificações + Avatar ── */}
+      <div className="flex items-center gap-3">
+        <NotificationsSheet notifications={notifications as any} />
+
+        <UserMenuSheet user={session?.user} hasBarbershop={!!userBarbershop}>
+          <button className="relative h-9 w-9 overflow-hidden rounded-full border border-zinc-800">
+            <Image
+              src={session?.user?.image || "/avatar-placeholder.png"}
+              alt="Perfil"
+              fill
+              className="object-cover"
+            />
+          </button>
+        </UserMenuSheet>
+      </div>
     </header>
   );
 }
