@@ -21,15 +21,23 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Define se após o login vai para o /admin ou para a home /
+  const [targetPath, setTargetPath] = useState("/");
+
   // Estados dos inputs
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  const handleOpenLogin = (path: string) => {
+    setTargetPath(path);
+    setView("login");
+  };
+
   const handleGoogleLogin = async () => {
     await authClient.signIn.social({
       provider: "google",
-      callbackURL: "/",
+      callbackURL: targetPath,
     });
   };
 
@@ -42,14 +50,14 @@ export default function LoginPage() {
         const { error } = await authClient.signIn.email({
           email,
           password,
-          callbackURL: "/",
+          callbackURL: targetPath,
         });
 
         if (error) {
           toast.error(error.message || "E-mail ou senha incorretos.");
         } else {
           toast.success("Login realizado com sucesso!");
-          router.push("/");
+          router.push(targetPath);
         }
       } else {
         if (!name) {
@@ -62,14 +70,14 @@ export default function LoginPage() {
           email,
           password,
           name,
-          callbackURL: "/",
+          callbackURL: targetPath,
         });
 
         if (error) {
           toast.error(error.message || "Erro ao criar conta.");
         } else {
           toast.success("Conta criada com sucesso!");
-          router.push("/");
+          router.push(targetPath);
         }
       }
     } catch {
@@ -114,8 +122,8 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* GRUPO INFERIOR: TEXTOS + BOTÕES (Agrupados para ficarem próximos) */}
-            <div className="flex w-full flex-col items-center gap-10">
+            {/* GRUPO INFERIOR: TEXTOS + BOTÕES */}
+            <div className="flex w-full flex-col items-center gap-8">
               {/* ÁREA CENTRALIZADA: TÍTULO E SUBTÍTULO */}
               <div className="flex flex-col items-center px-2 text-center">
                 <h1 className="text-3xl font-bold tracking-tight text-white">
@@ -126,12 +134,15 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              {/* BOTÕES EMPILHADOS E TERMOS */}
-              <div className="flex w-full flex-col items-center gap-6">
+              {/* BOTÕES EMPILHADOS E LINK DE BARBEIRO */}
+              <div className="flex w-full flex-col items-center gap-3">
                 {/* BOTÃO PRINCIPAL BRANCO */}
                 <button
                   type="button"
-                  onClick={() => setView("signup")}
+                  onClick={() => {
+                    setTargetPath("/");
+                    setView("signup");
+                  }}
                   className="flex h-13 w-full items-center justify-center rounded-full bg-white text-xs font-bold tracking-wide text-black shadow-lg transition-all hover:bg-zinc-200 active:scale-[0.98]"
                 >
                   CRIAR CONTA
@@ -140,14 +151,26 @@ export default function LoginPage() {
                 {/* BOTÃO SECUNDÁRIO ESCURO */}
                 <button
                   type="button"
-                  onClick={() => setView("login")}
+                  onClick={() => handleOpenLogin("/")}
                   className="flex h-13 w-full items-center justify-center rounded-full border border-zinc-800 bg-[#1c1c1e] text-xs font-bold tracking-wide text-white transition-all hover:bg-zinc-800 active:scale-[0.98]"
                 >
                   ENTRAR COM SUA CONTA
                 </button>
 
+                {/* LINK SUTIL PARA O BARBEIRO */}
+                <button
+                  type="button"
+                  onClick={() => handleOpenLogin("/admin")}
+                  className="mt-2 text-xs text-zinc-400 transition-colors hover:text-white"
+                >
+                  É dono de barbearia?{" "}
+                  <span className="font-bold text-white underline">
+                    Acesse o painel
+                  </span>
+                </button>
+
                 {/* TEXTO DE TERMOS E PRIVACIDADE NO RODAPÉ */}
-                <p className="mt-2 px-4 text-center text-[10px] leading-tight text-zinc-500">
+                <p className="mt-3 px-4 text-center text-[10px] leading-tight text-zinc-500">
                   Ao pressionar qualquer opção, você concorda com os nossos{" "}
                   <a
                     href="#"
@@ -202,9 +225,11 @@ export default function LoginPage() {
                 {view === "login" ? "Entrar" : "Criar Conta"}
               </h1>
               <p className="mb-6 text-xs text-zinc-400">
-                {view === "login"
-                  ? "Insira seus dados para acessar sua conta."
-                  : "Preencha as informações para começar."}
+                {targetPath === "/admin"
+                  ? "Acesse com sua conta para gerenciar seu painel."
+                  : view === "login"
+                    ? "Insira seus dados para acessar sua conta."
+                    : "Preencha as informações para começar."}
               </p>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">

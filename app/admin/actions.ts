@@ -59,6 +59,8 @@ export async function updateBarbershop(data: {
   }
 
   revalidatePath("/admin");
+  revalidatePath("/admin/settings");
+  revalidatePath(`/barbershops/${barbershop.id}`);
   revalidatePath("/");
   return barbershop;
 }
@@ -82,7 +84,11 @@ export async function createService(data: {
       imageUrl: data.imageUrl,
     },
   });
+
   revalidatePath("/admin");
+  revalidatePath("/admin/services");
+  revalidatePath(`/barbershops/${data.barbershopId}`);
+  revalidatePath("/");
   return service;
 }
 
@@ -102,15 +108,23 @@ export async function updateService(data: {
       imageUrl: data.imageUrl,
     },
   });
+
   revalidatePath("/admin");
+  revalidatePath("/admin/services");
+  revalidatePath(`/barbershops/${service.babershopId}`);
+  revalidatePath("/");
   return service;
 }
 
 export async function deleteService(id: string) {
-  await db.barbershopService.delete({
+  const service = await db.barbershopService.delete({
     where: { id },
   });
+
   revalidatePath("/admin");
+  revalidatePath("/admin/services");
+  revalidatePath(`/barbershops/${service.babershopId}`);
+  revalidatePath("/");
 }
 
 // ==========================================
@@ -144,6 +158,8 @@ export async function updateOpeningHours(
   });
 
   revalidatePath("/admin");
+  revalidatePath("/admin/hours");
+  revalidatePath(`/barbershops/${barbershopId}`);
   revalidatePath("/");
 }
 
@@ -151,7 +167,7 @@ export async function updateOpeningHours(
 // AGENDA / AGENDAMENTOS
 // ==========================================
 export async function cancelBookingByBarber(bookingId: string) {
-  await db.booking.update({
+  const booking = await db.booking.update({
     where: { id: bookingId },
     data: {
       cancelled: true,
@@ -161,4 +177,5 @@ export async function cancelBookingByBarber(bookingId: string) {
 
   revalidatePath("/admin");
   revalidatePath("/admin/agenda");
+  revalidatePath(`/barbershops/${booking.babershopId}`);
 }

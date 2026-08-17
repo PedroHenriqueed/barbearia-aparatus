@@ -38,16 +38,6 @@ export default async function Header() {
       <div className="flex items-center gap-3">
         <NotificationsSheet notifications={notifications as any} />
 
-        <UserMenuSheet user={session?.user} hasBarbershop={!!userBarbershop}>
-          <button className="relative h-9 w-9 overflow-hidden rounded-full border border-zinc-800">
-            <Image
-              src={session?.user?.image || "/avatar-placeholder.png"}
-              alt="Perfil"
-              fill
-              className="object-cover"
-            />
-          </button>
-        </UserMenuSheet>
       </div>
     </header>
   );
