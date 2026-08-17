@@ -20,18 +20,15 @@ export default function LoginPage() {
   const [view, setView] = useState<"welcome" | "login" | "signup">("welcome");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Define se após o login vai para o /admin ou para a home /
   const [targetPath, setTargetPath] = useState("/");
 
-  // Estados dos inputs
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleOpenLogin = (path: string) => {
+  const handleOpenLogin = (path: string, mode: "login" | "signup") => {
     setTargetPath(path);
-    setView("login");
+    setView(mode);
   };
 
   const handleGoogleLogin = async () => {
@@ -88,274 +85,250 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="fixed inset-0 z-[999] flex flex-col items-center justify-between overflow-hidden bg-black px-6 py-8 font-sans text-white">
-      {/* IMAGEM DE FUNDO COM OVERLAY ESCURO */}
-      <div className="absolute inset-0 z-0">
-        <Image
-          src="/3a773e8613d46875310847caab4ec091.jpg"
-          alt="Barbearia"
-          fill
-          className="object-cover opacity-35"
-          priority
-          unoptimized
-        />
-        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/85 to-black" />
+    <div className="fixed inset-0 z-[999] flex flex-col overflow-hidden bg-black font-sans text-zinc-900">
+      {/* =========================================
+          CABEÇALHO SUPERIOR (OCUPA TODO O ESPAÇO RESTANTE)
+         ========================================= */}
+      <div
+        className={`relative flex w-full items-center justify-center bg-black transition-all duration-500 ease-in-out ${
+          view === "welcome"
+            ? "flex-1 p-6 pb-12"
+            : "h-[16vh] min-h-[120px] p-6 pb-8"
+        }`}
+      >
+        {/* IMAGEM DE FUNDO - TRANSIÇÃO SUAVE */}
+        <div
+          className={`absolute inset-0 z-0 transition-all duration-500 ease-in-out ${
+            view === "welcome"
+              ? "scale-100 opacity-100"
+              : "pointer-events-none scale-105 opacity-0"
+          }`}
+        >
+          <Image
+            src="/3a773e8613d46875310847caab4ec091.jpg"
+            alt="Barbearia"
+            fill
+            className="object-cover"
+            priority
+            unoptimized
+          />
+        </div>
+
+        {/* LOGO DA TRIVO E BOTÃO VOLTAR */}
+        {view !== "welcome" && (
+          <>
+            <button
+              type="button"
+              onClick={() => setView("welcome")}
+              className="absolute top-6 left-6 z-20 flex h-10 w-10 items-center justify-center rounded-full bg-white text-black shadow-lg transition-all hover:bg-zinc-200 active:scale-95"
+            >
+              <ArrowLeft size={18} />
+            </button>
+
+            <div className="relative z-10 h-10 w-32">
+              <Image
+                src="/trivo_logo.png"
+                alt="Logo Trivo"
+                fill
+                className="object-contain brightness-0 invert"
+                priority
+              />
+            </div>
+          </>
+        )}
       </div>
 
-      {/* CONTAINER PRINCIPAL */}
-      <div className="relative z-10 flex h-full w-full max-w-[360px] flex-col justify-between">
-        {/* =========================================
-            ETAPA 1: TELA INICIAL (WELCOME)
-           ========================================= */}
+      {/* =========================================
+          CARTÃO INFERIOR BRANCO
+         ========================================= */}
+      <div
+        className={`relative z-20 -mt-8 w-full rounded-t-[36px] bg-white p-6 shadow-2xl transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] md:mx-auto md:max-w-md md:p-8 ${
+          view !== "welcome" ? "flex-1" : ""
+        }`}
+      >
+        {/* TELA 1: WELCOME (INICIAL) */}
         {view === "welcome" && (
-          <div className="flex h-full flex-col justify-between py-4">
-            {/* LOGO EM DESTAQUE NO TOPO */}
-            <div className="mt-8 flex flex-col items-center">
-              <div className="relative h-20 w-48">
+          <div className="flex flex-col justify-between space-y-6">
+            <div className="flex flex-col items-center space-y-2 text-center">
+              <div className="relative h-10 w-32">
                 <Image
                   src="/trivo_logo.png"
                   alt="Logo Trivo"
                   fill
-                  className="object-contain brightness-0 invert"
+                  className="object-contain brightness-0"
                   priority
                 />
               </div>
+              <p className="px-2 text-xs font-medium text-zinc-500">
+                Sua melhor versão começa aqui!
+              </p>
             </div>
 
-            {/* GRUPO INFERIOR: TEXTOS + BOTÕES */}
-            <div className="flex w-full flex-col items-center gap-8">
-              {/* ÁREA CENTRALIZADA: TÍTULO E SUBTÍTULO */}
-              <div className="flex flex-col items-center px-2 text-center">
-                <h1 className="text-3xl font-bold tracking-tight text-white">
-                  Bem-vindo
-                </h1>
-                <p className="mt-1.5 text-sm font-normal text-zinc-400">
-                  Sua melhor versão começa aqui.
-                </p>
-              </div>
+            <div className="space-y-4">
+              <button
+                type="button"
+                onClick={() => handleOpenLogin("/", "signup")}
+                className="flex h-12 w-full items-center justify-center rounded-2xl bg-black text-xs font-bold tracking-wider text-white shadow-md transition-all hover:bg-zinc-800 active:scale-[0.98]"
+              >
+                CRIAR CONTA
+              </button>
 
-              {/* BOTÕES EMPILHADOS E LINK DE BARBEIRO */}
-              <div className="flex w-full flex-col items-center gap-3">
-                {/* BOTÃO PRINCIPAL BRANCO */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setTargetPath("/");
-                    setView("signup");
-                  }}
-                  className="flex h-13 w-full items-center justify-center rounded-full bg-white text-xs font-bold tracking-wide text-black shadow-lg transition-all hover:bg-zinc-200 active:scale-[0.98]"
-                >
-                  CRIAR CONTA
-                </button>
+              <button
+                type="button"
+                onClick={() => handleOpenLogin("/", "login")}
+                className="flex h-12 w-full items-center justify-center rounded-2xl border border-zinc-200 bg-zinc-100 text-xs font-bold tracking-wider text-zinc-900 transition-all hover:bg-zinc-200 active:scale-[0.98]"
+              >
+                ENTRAR
+              </button>
+            </div>
 
-                {/* BOTÃO SECUNDÁRIO ESCURO */}
-                <button
-                  type="button"
-                  onClick={() => handleOpenLogin("/")}
-                  className="flex h-13 w-full items-center justify-center rounded-full border border-zinc-800 bg-[#1c1c1e] text-xs font-bold tracking-wide text-white transition-all hover:bg-zinc-800 active:scale-[0.98]"
-                >
-                  ENTRAR COM SUA CONTA
-                </button>
+            <div className="space-y-3 pt-1 text-center">
+              <button
+                type="button"
+                onClick={() => handleOpenLogin("/admin", "login")}
+                className="underline text-xs font-bold text-zinc-600 transition-colors hover:text-zinc-900"
+              >
+                Acessar Admin
+              </button>
 
-                {/* LINK SUTIL PARA O BARBEIRO */}
-                <button
-                  type="button"
-                  onClick={() => handleOpenLogin("/admin")}
-                  className="mt-2 text-xs text-zinc-400 transition-colors hover:text-white"
-                >
-                  É dono de barbearia?{" "}
-                  <span className="font-bold text-white underline">
-                    Acesse o painel
-                  </span>
-                </button>
-
-                {/* TEXTO DE TERMOS E PRIVACIDADE NO RODAPÉ */}
-                <p className="mt-3 px-4 text-center text-[10px] leading-tight text-zinc-500">
-                  Ao pressionar qualquer opção, você concorda com os nossos{" "}
-                  <a
-                    href="#"
-                    className="text-zinc-400 underline underline-offset-2"
-                  >
-                    Termos de Serviço
-                  </a>{" "}
-                  e{" "}
-                  <a
-                    href="#"
-                    className="text-zinc-400 underline underline-offset-2"
-                  >
-                    Política de Privacidade
-                  </a>
-                  .
-                </p>
-              </div>
+              <p className="text-[10px] text-zinc-400">
+                Ao continuar, você concorda com nossos{" "}
+                <a href="#" className="underline">
+                  Termos
+                </a>{" "}
+                e{" "}
+                <a href="#" className="underline">
+                  Privacidade
+                </a>
+                .
+              </p>
             </div>
           </div>
         )}
 
-        {/* =========================================
-            ETAPA 2: FORMULÁRIO (LOGIN / SIGNUP)
-           ========================================= */}
+        {/* TELA 2: FORMULÁRIO (ENTRAR / CRIAR CONTA) */}
         {view !== "welcome" && (
-          <div className="flex h-full flex-col justify-between py-2">
-            {/* BARRA SUPERIOR (VOLTAR E LOGO) */}
-            <div className="flex items-center justify-between pt-1">
-              <button
-                type="button"
-                onClick={() => setView("welcome")}
-                className="flex h-10 w-10 items-center justify-center rounded-full border border-zinc-800 bg-zinc-900/90 text-white backdrop-blur-md transition-all hover:bg-zinc-800"
-              >
-                <ArrowLeft size={18} />
-              </button>
-
-              <div className="relative h-10 w-24">
-                <Image
-                  src="/trivo_logo.png"
-                  alt="Logo"
-                  fill
-                  className="object-contain brightness-0 invert"
-                />
-              </div>
-
-              <div className="w-10" />
-            </div>
-
-            {/* FORMULÁRIO CENTRAL */}
-            <div className="my-auto py-2">
-              <h1 className="mb-1 text-2xl font-black tracking-wide text-white uppercase">
+          <div className="flex flex-col gap-4">
+            <div>
+              <h1 className="text-2xl font-black tracking-tight text-zinc-900">
                 {view === "login" ? "Entrar" : "Criar Conta"}
               </h1>
-              <p className="mb-6 text-xs text-zinc-400">
-                {targetPath === "/admin"
-                  ? "Acesse com sua conta para gerenciar seu painel."
-                  : view === "login"
-                    ? "Insira seus dados para acessar sua conta."
-                    : "Preencha as informações para começar."}
+              <p className="mt-0.5 text-xs text-zinc-500">
+                {view === "login"
+                  ? "Insira seus dados abaixo para acessar sua conta."
+                  : "Preencha as informações para começar."}
               </p>
+            </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
-                {view === "signup" && (
+            <form onSubmit={handleSubmit} className="space-y-3.5">
+              {view === "signup" && (
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+                    Nome Completo
+                  </label>
                   <div className="relative">
-                    <User className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                    <User className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                     <input
                       type="text"
-                      placeholder="Nome completo"
+                      placeholder="Ex: Pedro Henrique"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       required={view === "signup"}
-                      className="w-full rounded-2xl border border-zinc-800 bg-zinc-950/80 py-4 pr-4 pl-12 text-xs text-white placeholder-zinc-500 backdrop-blur-md transition-all outline-none focus:border-zinc-400"
+                      className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 py-3 pr-4 pl-10 text-xs font-medium text-zinc-900 transition-all outline-none focus:border-black focus:bg-white"
                     />
                   </div>
-                )}
+                </div>
+              )}
 
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+                  E-mail
+                </label>
                 <div className="relative">
-                  <Mail className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <Mail className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                   <input
                     type="email"
-                    placeholder="Seu e-mail"
+                    placeholder="seuemail@exemplo.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950/80 py-4 pr-4 pl-12 text-xs text-white placeholder-zinc-500 backdrop-blur-md transition-all outline-none focus:border-zinc-400"
+                    className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 py-3 pr-4 pl-10 text-xs font-medium text-zinc-900 transition-all outline-none focus:border-black focus:bg-white"
                   />
                 </div>
+              </div>
 
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold tracking-wider text-zinc-500 uppercase">
+                  Senha
+                </label>
                 <div className="relative">
-                  <Lock className="absolute top-1/2 left-4 h-4 w-4 -translate-y-1/2 text-zinc-400" />
+                  <Lock className="absolute top-1/2 left-3.5 h-4 w-4 -translate-y-1/2 text-zinc-400" />
                   <input
                     type={showPassword ? "text" : "password"}
-                    placeholder="Sua senha"
+                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full rounded-2xl border border-zinc-800 bg-zinc-950/80 py-4 pr-12 pl-12 text-xs text-white placeholder-zinc-500 backdrop-blur-md transition-all outline-none focus:border-zinc-400"
+                    className="w-full rounded-2xl border border-zinc-200 bg-zinc-50 py-3 pr-10 pl-10 text-xs font-medium text-zinc-900 transition-all outline-none focus:border-black focus:bg-white"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute top-1/2 right-4 -translate-y-1/2 text-zinc-500 transition-colors hover:text-white"
+                    className="absolute top-1/2 right-3.5 -translate-y-1/2 text-zinc-400 hover:text-zinc-700"
                   >
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
+              </div>
 
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="mt-2 flex h-13 w-full items-center justify-center rounded-full bg-white text-xs font-bold tracking-wider text-black uppercase shadow-lg transition-all hover:bg-zinc-200 active:scale-[0.98] disabled:opacity-50"
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-black" />
-                  ) : view === "login" ? (
-                    "ENTRAR"
-                  ) : (
-                    "CONFIRMAR CADASTRO"
-                  )}
-                </button>
-              </form>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="mt-1 flex h-12 w-full items-center justify-center rounded-2xl bg-black text-xs font-bold tracking-wider text-white uppercase shadow-md transition-all hover:bg-zinc-800 active:scale-[0.98] disabled:opacity-50"
+              >
+                {isLoading ? (
+                  <Loader2 className="h-4 w-4 animate-spin text-white" />
+                ) : view === "login" ? (
+                  "ENTRAR"
+                ) : (
+                  "CONFIRMAR CADASTRO"
+                )}
+              </button>
 
-              {/* DIVISOR */}
-              <div className="relative my-5 flex items-center justify-center">
-                <div className="w-full border-t border-zinc-800" />
-                <span className="absolute bg-black/80 px-3 text-[10px] font-medium tracking-wider text-zinc-400 uppercase backdrop-blur-sm">
-                  Ou acesse com
+              <div className="flex items-center gap-3 pt-2 pb-0.5">
+                <div className="h-[1px] flex-1 bg-zinc-200" />
+                <span className="text-[10px] font-semibold tracking-wider text-zinc-400 uppercase">
+                  Ou continue com
                 </span>
+                <div className="h-[1px] flex-1 bg-zinc-200" />
               </div>
 
-              {/* LOGIN GOOGLE */}
-              <div className="flex justify-center">
-                <button
-                  type="button"
-                  onClick={handleGoogleLogin}
-                  className="flex h-12 w-12 items-center justify-center rounded-full border border-zinc-800 bg-zinc-950/80 backdrop-blur-md transition-all hover:bg-zinc-800"
-                >
-                  <svg className="h-5 w-5" viewBox="0 0 24 24">
-                    <path
-                      fill="#4285F4"
-                      d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
-                    />
-                    <path
-                      fill="#34A853"
-                      d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"
-                    />
-                    <path
-                      fill="#FBBC05"
-                      d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"
-                    />
-                    <path
-                      fill="#EA4335"
-                      d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-
-            {/* TROCAR ENTRE LOGIN E SIGNUP */}
-            <div className="pb-2 text-center">
-              {view === "login" ? (
-                <p className="text-[11px] text-zinc-400">
-                  Não tem uma conta?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setView("signup")}
-                    className="font-bold text-white hover:underline"
-                  >
-                    Cadastre-se
-                  </button>
-                </p>
-              ) : (
-                <p className="text-[11px] text-zinc-400">
-                  Já tem uma conta?{" "}
-                  <button
-                    type="button"
-                    onClick={() => setView("login")}
-                    className="font-bold text-white hover:underline"
-                  >
-                    Faça login
-                  </button>
-                </p>
-              )}
-            </div>
+              <button
+                type="button"
+                onClick={handleGoogleLogin}
+                className="flex h-11 w-full items-center justify-center gap-2 rounded-2xl border border-zinc-200 bg-zinc-50 text-xs font-bold text-zinc-700 transition-all hover:bg-zinc-100"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24">
+                  <path
+                    fill="#4285F4"
+                    d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.665-5.17 3.665-9.17z"
+                  />
+                  <path
+                    fill="#34A853"
+                    d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.11-6.72-4.96H1.29v3.15C3.26 21.3 7.31 24 12 24z"
+                  />
+                  <path
+                    fill="#FBBC05"
+                    d="M5.28 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.61H1.29C.47 8.24 0 10.06 0 12s.47 3.76 1.29 5.39l3.99-3.15z"
+                  />
+                  <path
+                    fill="#EA4335"
+                    d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.7 1.29 6.61l3.99 3.15c.95-2.85 3.6-4.96 6.72-4.96z"
+                  />
+                </svg>
+                Google
+              </button>
+            </form>
           </div>
         )}
       </div>
