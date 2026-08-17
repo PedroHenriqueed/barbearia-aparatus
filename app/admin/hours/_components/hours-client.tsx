@@ -5,13 +5,16 @@ import { Save, Loader2, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { updateOpeningHours } from "@/app/admin/actions";
 
+// 👇 Ajuste na interface para aceitar string | null | undefined
 interface OpeningHour {
+  id?: string;
+  barbershopId?: string;
   dayOfWeek: number;
   isOpen: boolean;
   startTime: string;
   endTime: string;
-  lunchStart: string;
-  lunchEnd: string;
+  lunchStart?: string | null;
+  lunchEnd?: string | null;
 }
 
 const DAYS_OF_WEEK = [
@@ -42,8 +45,15 @@ export default function HoursClient({
     lunchEnd: "13:00",
   }));
 
+  // 👇 Trata valores vindos como null do banco para string vazia "" nos inputs
   const [hours, setHours] = useState<OpeningHour[]>(
-    initialHours?.length ? initialHours : defaultHours,
+    initialHours?.length
+      ? initialHours.map((h) => ({
+          ...h,
+          lunchStart: h.lunchStart ?? "12:00",
+          lunchEnd: h.lunchEnd ?? "13:00",
+        }))
+      : defaultHours,
   );
 
   const handleHourChange = (
@@ -63,7 +73,16 @@ export default function HoursClient({
     setIsLoading(true);
 
     try {
-      await updateOpeningHours(barbershopId, hours);
+      const sanitizedHours = hours.map((h) => ({
+        dayOfWeek: h.dayOfWeek,
+        isOpen: h.isOpen,
+        startTime: h.startTime,
+        endTime: h.endTime,
+        lunchStart: h.lunchStart || undefined,
+        lunchEnd: h.lunchEnd || undefined,
+      }));
+
+      await updateOpeningHours(barbershopId, sanitizedHours);
       toast.success("Horários atualizados com sucesso!");
     } catch {
       toast.error("Erro ao salvar horários.");
@@ -166,7 +185,7 @@ export default function HoursClient({
                     </span>
                     <input
                       type="time"
-                      value={hour.lunchStart}
+                      value={hour.lunchStart ?? ""}
                       onChange={(e) =>
                         handleHourChange(
                           hour.dayOfWeek,
@@ -184,7 +203,7 @@ export default function HoursClient({
                     </span>
                     <input
                       type="time"
-                      value={hour.lunchEnd}
+                      value={hour.lunchEnd ?? ""}
                       onChange={(e) =>
                         handleHourChange(
                           hour.dayOfWeek,
