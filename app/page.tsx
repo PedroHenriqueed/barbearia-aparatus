@@ -41,6 +41,7 @@ const Home = async (props: HomeProps) => {
         include: {
           service: true,
           barbershop: true,
+          review: true,
         },
         orderBy: {
           date: "asc",
