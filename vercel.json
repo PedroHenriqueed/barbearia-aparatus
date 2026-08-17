@@ -1,8 +1,8 @@
 {
-  "crons": [
+"crons": [
     {
-      "path": "/api/cron/check-waitlist",
-      "schedule": "*/5 * * * *"
+      "path": "/api/cron",
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/reminders",
